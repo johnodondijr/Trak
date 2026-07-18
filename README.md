@@ -98,14 +98,13 @@ Open the app, click **Try with sample data** to explore instantly, or
 
 The app is a static SPA and deploys to GitHub Pages via GitHub Actions
 (`.github/workflows/deploy.yml`). On every push to the default branch the
-workflow runs the tests, builds the app, and publishes `dist/` to Pages. The
-workflow enables Pages automatically on its first run (via
-`actions/configure-pages`), so no manual setup is required — the site goes
-live at https://johnodondijr.github.io/Trak/.
+workflow runs the tests, builds the app, and publishes `dist/` to Pages.
 
-> If your organization restricts automatic Pages enablement, open
-> **Settings → Pages → Build and deployment** once and set **Source** to
-> **GitHub Actions**, then re-run the workflow.
+**One-time setup (required):** in the repository, open **Settings → Pages →
+Build and deployment** and set **Source** to **GitHub Actions**. (This can't be
+automated — the Actions token isn't permitted to enable Pages.) After that, the
+workflow deploys on every push and the site is live at
+https://johnodondijr.github.io/Trak/.
 
 ## Tech
 
