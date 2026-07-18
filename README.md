@@ -11,6 +11,8 @@ messages.
 > **Core value:** Know exactly where your mobile money goes without manually
 > checking your messages or recording every transaction.
 
+**🔗 Live app:** https://johnodondijr.github.io/Trak/
+
 ---
 
 ## What it does
@@ -91,6 +93,17 @@ npm run build     # type-check + production build
 
 Open the app, click **Try with sample data** to explore instantly, or
 **Import your messages** to paste your own.
+
+## Deployment (GitHub Pages)
+
+The app is a static SPA and deploys to GitHub Pages via GitHub Actions
+(`.github/workflows/deploy.yml`). On every push to the default branch the
+workflow runs the tests, builds the app, and publishes `dist/` to Pages.
+
+**One-time setup:** in the repository, open **Settings → Pages → Build and
+deployment** and set **Source** to **GitHub Actions**. After that the site
+redeploys automatically on each push, at
+https://johnodondijr.github.io/Trak/.
 
 ## Tech
 
