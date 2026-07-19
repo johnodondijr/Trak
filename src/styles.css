@@ -225,6 +225,39 @@ button {
   transform: scale(0.94);
 }
 
+/* ---- Sample-data banner ---- */
+.sample-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: color-mix(in srgb, var(--status-warning) 18%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--status-warning) 40%, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  margin-bottom: 14px;
+  font-size: 12.5px;
+}
+.sample-banner-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.sample-banner button {
+  border: none;
+  background: var(--ink-btn);
+  color: var(--surface-1);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.sample-banner button.ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
 /* ---- Hero balance card ---- */
 .hero {
   background: linear-gradient(150deg, var(--hero-1), var(--hero-2));

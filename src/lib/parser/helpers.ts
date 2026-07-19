@@ -69,7 +69,12 @@ function to24Hour(hour: number, meridiem: string | undefined): number {
  * now) when nothing recognizable is found, so a single odd message never
  * drops the whole transaction.
  */
-export function parseDate(raw: string, fallback: Date = new Date()): Date {
+export function parseDate(rawInput: string, fallback: Date = new Date()): Date {
+  // Drop "due on/by <date>" clauses first — that's a future repayment/expiry
+  // date (e.g. Fuliza states a due date), never the transaction time. Without
+  // this, a message with no timestamp would be mis-dated to its due date.
+  const raw = rawInput.replace(/\bdue\s+(?:on|by)\b[^.,]*/gi, " ");
+
   // Numeric form: d/m/yy or d/m/yyyy, optional time with am/pm.
   const numeric = raw.match(
     /(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+at\s+|\s*,?\s+|\s+)?(\d{1,2}):(\d{2})(?:\s*([AaPp][Mm]))?/,

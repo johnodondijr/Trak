@@ -17,6 +17,7 @@ import {
   saveTransactions,
 } from "./lib/storage";
 import { SAMPLE_MESSAGES } from "./data/sampleMessages";
+import { hasSample, stripSample } from "./lib/sample";
 import { kes, greeting } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
@@ -74,7 +75,8 @@ export default function App() {
     if (!merged.some((t) => t.date.getTime() >= monthStart)) setRange("all");
   }
   function handleImport(incoming: Transaction[]) {
-    const merged = mergeTransactions(transactions, incoming);
+    // Importing real data removes the demo so the two never mix.
+    const merged = mergeTransactions(stripSample(transactions), incoming);
     setTransactions(merged);
     revealImported(merged);
   }
@@ -83,6 +85,9 @@ export default function App() {
     const merged = mergeTransactions(transactions, sample);
     setTransactions(merged);
     revealImported(merged);
+  }
+  function clearSample() {
+    setTransactions((prev) => stripSample(prev));
   }
   function handleClear() {
     if (confirm("Remove all imported transactions? This can't be undone.")) {
@@ -93,6 +98,7 @@ export default function App() {
   }
 
   const hasData = transactions.length > 0;
+  const showingSample = useMemo(() => hasSample(transactions), [transactions]);
   const spent = rangeTotals.expense + rangeTotals.charges;
 
   return (
@@ -119,6 +125,20 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        {showingSample && (
+          <div className="sample-banner">
+            <span>
+              <strong>Sample data</strong> — these aren't your messages.
+            </span>
+            <div className="sample-banner-actions">
+              <button onClick={() => setImporting(true)}>Import mine</button>
+              <button className="ghost" onClick={clearSample}>
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
 
         {!hasData ? (
           <EmptyState onImport={() => setImporting(true)} onSample={loadSample} />
