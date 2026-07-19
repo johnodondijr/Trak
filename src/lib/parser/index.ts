@@ -6,7 +6,7 @@
  * de-duplicates by transaction ref, and returns transactions sorted newest
  * first along with a count of lines it couldn't parse.
  */
-import type { Transaction } from "./types";
+import type { Transaction, Provider } from "./types";
 import { parseMpesa, isMpesa } from "./mpesa";
 import { parseAirtel, isAirtel } from "./airtel";
 import { categorize } from "../categorize";
@@ -18,16 +18,21 @@ export { isAirtel } from "./airtel";
 /**
  * Parse one SMS into a fully-categorized {@link Transaction}, or `null` if the
  * text isn't a recognizable mobile-money transaction.
+ *
+ * When {@link hint} is supplied (e.g. from the SMS sender address in a backup
+ * file) that provider's parser is tried first, which disambiguates the rare
+ * message whose wording could belong to either network.
  */
-export function parseMessage(raw: string): Transaction | null {
+export function parseMessage(raw: string, hint?: Provider | null): Transaction | null {
   const text = raw.trim();
   if (!text) return null;
 
-  // Prefer the provider the text clearly belongs to; fall back to trying both
-  // so a mislabeled or brand-less message still gets a chance.
-  const order = isAirtel(text) && !isMpesa(text)
-    ? [parseAirtel, parseMpesa]
-    : [parseMpesa, parseAirtel];
+  // Prefer the hinted provider, else the one the text clearly belongs to;
+  // always fall back to trying both so nothing is dropped on a wording change.
+  let order: Array<typeof parseMpesa>;
+  if (hint === "airtel") order = [parseAirtel, parseMpesa];
+  else if (hint === "mpesa") order = [parseMpesa, parseAirtel];
+  else order = isAirtel(text) && !isMpesa(text) ? [parseAirtel, parseMpesa] : [parseMpesa, parseAirtel];
 
   for (const parse of order) {
     const parsed = parse(text);
@@ -36,6 +41,40 @@ export function parseMessage(raw: string): Transaction | null {
     }
   }
   return null;
+}
+
+/** A single SMS with the metadata a backup file provides alongside the text. */
+export interface RawSms {
+  /** The message text (M-Pesa / Airtel confirmation). */
+  body: string;
+  /** Sender address / short-code, e.g. "MPESA" or "AirtelMoney". */
+  address?: string | null;
+  /** When the SMS was received — authoritative, unlike the in-text date. */
+  date?: Date | null;
+}
+
+/** Map an SMS sender address to a provider, or null when it isn't one we track. */
+export function providerFromAddress(address: string | null | undefined): Provider | null {
+  if (!address) return null;
+  const a = address.toLowerCase();
+  if (/m-?pesa|safaricom/.test(a)) return "mpesa";
+  if (/airtel/.test(a)) return "airtel";
+  return null;
+}
+
+/**
+ * Parse an SMS that carries backup metadata. The sender address disambiguates
+ * the provider, and the SMS receipt time overrides the (2-digit-year, sometimes
+ * ambiguous) date embedded in the message body.
+ */
+export function parseSms(sms: RawSms): Transaction | null {
+  const hint = providerFromAddress(sms.address);
+  const txn = parseMessage(sms.body, hint);
+  if (!txn) return null;
+  if (sms.date && !isNaN(sms.date.getTime())) {
+    txn.date = sms.date;
+  }
+  return txn;
 }
 
 export interface ParseResult {

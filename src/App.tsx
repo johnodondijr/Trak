@@ -67,13 +67,27 @@ export default function App() {
   const trend = useMemo(() => monthlyTrend(transactions), [transactions]);
   const tips = useMemo(() => insights(transactions, now), [transactions, now]);
 
+  // When imported data has nothing in the current month, the default "This
+  // month" view would look empty even though the ledger is full — so widen the
+  // range to "All time" to make freshly imported (often historical) data
+  // visible right away.
+  function revealImported(merged: Transaction[]) {
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const hasThisMonth = merged.some((t) => t.date.getTime() >= monthStart);
+    if (!hasThisMonth) setRange("all");
+  }
+
   function handleImport(incoming: Transaction[]) {
-    setTransactions((prev) => mergeTransactions(prev, incoming));
+    const merged = mergeTransactions(transactions, incoming);
+    setTransactions(merged);
+    revealImported(merged);
   }
 
   function loadSample() {
     const { transactions: sample } = parseMessages(SAMPLE_MESSAGES);
-    setTransactions((prev) => mergeTransactions(prev, sample));
+    const merged = mergeTransactions(transactions, sample);
+    setTransactions(merged);
+    revealImported(merged);
   }
 
   function handleClear() {

@@ -17,7 +17,7 @@ messages.
 
 ## What it does
 
-Paste your M-Pesa / Airtel Money SMS messages and Trak automatically:
+Import your M-Pesa / Airtel Money history and Trak automatically:
 
 - **Reads and parses** each message into a structured transaction
   (send, receive, Paybill, Till/Buy Goods, airtime, withdrawal, deposit,
@@ -37,6 +37,29 @@ transactions are stored only in `localStorage`.
 
 ---
 
+## Getting your real data in
+
+Trak is a website, so — like any website — it can't silently read your phone's
+SMS inbox (browsers forbid that; only a native Android app could). Instead you
+bring your data in through the **Import** dialog, which auto-detects the format:
+
+| Source | How to get it | What Trak does |
+|--------|---------------|----------------|
+| **Full SMS history** *(recommended)* | Install the free **SMS Backup & Restore** app, back up **Messages** as **XML**, upload the `.xml` | Reads every SMS, keeps only M-Pesa/Airtel ones, uses each message's real timestamp |
+| **M-Pesa statement** | Request it in the M-PESA app or via `*334#` → Statements; export to `.csv` | Maps the Receipt / Completion Time / Details / Paid In / Withdrawn columns straight to transactions |
+| **Other SMS export** | Any CSV with a message/body column | Parses each row as an SMS |
+| **Paste** | Copy a few messages from your Messages app | Parses the pasted text |
+
+You can upload multiple files at once, and re-importing is idempotent
+(duplicates are collapsed by transaction code).
+
+> **Want truly automatic reading of new messages as they arrive?** That requires
+> a native Android app with SMS permission (iOS blocks SMS access entirely).
+> It's a planned follow-up — the parsing/analytics engine here is UI-agnostic and
+> would be reused as-is.
+
+---
+
 ## Architecture
 
 The product's core value is the parsing + analytics engine, which is kept
@@ -52,6 +75,12 @@ src/
 │   │   ├── airtel.ts       # Airtel Money SMS templates → Transaction
 │   │   ├── index.ts        # public parse API + batch import + de-dup
 │   │   └── parser.test.ts
+│   ├── importers/
+│   │   ├── smsBackup.ts    # SMS Backup & Restore XML → RawSms[]
+│   │   ├── delimited.ts    # CSV/TSV tokenizer (quotes, delimiter detection)
+│   │   ├── statement.ts    # M-Pesa statement rows → Transaction
+│   │   ├── index.ts        # format auto-detection + dispatch
+│   │   └── importers.test.ts
 │   ├── categorize.ts       # Transaction → spending Category
 │   ├── analytics.ts        # totals, period summaries, trends, insights
 │   ├── analytics.test.ts

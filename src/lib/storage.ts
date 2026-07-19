@@ -28,15 +28,27 @@ export function loadTransactions(): Transaction[] {
 }
 
 export function saveTransactions(txns: Transaction[]): void {
+  const serialize = (trimRaw: boolean): string =>
+    JSON.stringify(
+      txns.map<StoredTransaction>((t) => ({
+        ...t,
+        // Raw SMS text is only needed for auditing/de-dup; trim it when space
+        // is tight so a large import (thousands of messages) still persists.
+        raw: trimRaw ? t.raw.slice(0, 160) : t.raw,
+        date: t.date.toISOString(),
+      })),
+    );
+
   try {
-    const serializable: StoredTransaction[] = txns.map((t) => ({
-      ...t,
-      date: t.date.toISOString(),
-    }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+    localStorage.setItem(STORAGE_KEY, serialize(false));
   } catch {
-    // Storage full or unavailable — fail silently; the in-memory state still
-    // works for the current session.
+    try {
+      // Retry with trimmed raw text before giving up.
+      localStorage.setItem(STORAGE_KEY, serialize(true));
+    } catch {
+      // Storage full or unavailable — fail silently; the in-memory state still
+      // works for the current session.
+    }
   }
 }
 
