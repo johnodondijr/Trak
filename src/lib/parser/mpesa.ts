@@ -183,9 +183,12 @@ function matchFuliza(raw: string): PartialTxn | null {
   };
 }
 
-/** Reversal: "Reversal ... has been credited/reversed ... Ksh...". */
+/** Reversal: "Reversal of transaction ... has been reversed/credited ... Ksh...". */
 function matchReversal(raw: string): PartialTxn | null {
-  if (!/revers/i.test(raw)) return null;
+  // Require reversal-specific wording, not just the substring "revers", so a
+  // payment to a business with "Reversal" in its name isn't mistaken for one.
+  if (!/revers(?:al|ed)\b/i.test(raw)) return null;
+  if (!/(has been reversed|been reversed|reversal of|credited to your)/i.test(raw)) return null;
   const m = raw.match(/Ksh?\s*([\d,]+(?:\.\d+)?)/i);
   if (!m) return null;
   return {
@@ -230,13 +233,29 @@ const MATCHERS: Array<(raw: string) => PartialTxn | null> = [
 ];
 
 /**
+ * Structural gate: is this an *official* M-Pesa transaction message?
+ *
+ * Every genuine M-Pesa SMS begins with a transaction code (8–12 uppercase
+ * alphanumerics, mixing letters and digits) followed by "Confirmed" (successful
+ * transactions of every kind) or "Failed" (a failed one). Promotional messages,
+ * balance-limit reminders, loan adverts and spam never match this shape, so
+ * this single check rejects them while keeping every real transaction.
+ */
+export function isMpesaTransaction(raw: string): boolean {
+  const m = raw.trim().match(/^([A-Z0-9]{8,12})\s+(Confirmed|Failed)\b/);
+  return !!m && /[A-Z]/.test(m[1]) && /[0-9]/.test(m[1]);
+}
+
+/**
  * Parse a single M-Pesa SMS into a {@link Transaction} (minus its category,
- * which is assigned later). Returns `null` when the text doesn't look like a
- * recognizable M-Pesa transaction.
+ * which is assigned later). Returns `null` when the text isn't an official
+ * M-Pesa transaction message (promos, reminders and spam are rejected).
  */
 export function parseMpesa(raw: string): Omit<Transaction, "category"> | null {
   const text = raw.trim();
-  if (/failed|could not|unable to complete|did not go through/i.test(text)) {
+  if (!isMpesaTransaction(text)) return null;
+
+  if (/^[A-Z0-9]{8,12}\s+Failed\b/.test(text) || /\bhas failed\b|could not be completed/i.test(text)) {
     // Failed transaction — record it but with no money moved.
     const amt = text.match(/Ksh?\s*([\d,]+(?:\.\d+)?)/i);
     return {

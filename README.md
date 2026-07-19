@@ -101,6 +101,18 @@ releases, and any line that can't be parsed is collected and reported rather
 than silently dropped. Batch imports de-duplicate by transaction code, so
 re-importing the same inbox is idempotent.
 
+**Only official transactions are recognized** — promos, reminders, adverts and
+spam are rejected by two independent filters:
+
+1. **A structural gate** (runs on every import path, including paste). A genuine
+   M-Pesa SMS must begin with a transaction code + `Confirmed`/`Failed`; a
+   genuine Airtel Money SMS must state a money verb in shillings *and* carry a
+   `Transaction ID` or the `Airtel Money` tag. "Buy 5GB for Ksh300", "Your
+   balance is Ksh1,250", loan adverts and the like never match this shape.
+2. **A sender allowlist** (for imports that carry the SMS sender). Messages from
+   anything other than the M-Pesa / Airtel Money senders are skipped before
+   parsing even begins.
+
 ### Data-visualization
 
 Charts follow a validated, colorblind-safe categorical palette and are explicitly

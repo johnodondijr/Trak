@@ -140,8 +140,31 @@ const MATCHERS: Array<(raw: string) => PartialTxn | null> = [
   matchSend,
 ];
 
+/**
+ * Structural gate: is this an *official* Airtel Money transaction message?
+ *
+ * Genuine Airtel Money messages state a money verb ("You have sent/received/
+ * paid…", "withdrawn", "deposited", "bought") in shillings, and carry either a
+ * transaction reference ("Transaction ID: …") or the "Airtel Money" tag.
+ * Adverts and reminders lack this combination, so they're rejected.
+ */
+export function isAirtelTransaction(raw: string): boolean {
+  const text = raw.trim();
+  const hasMoney = /ksh/i.test(text);
+  const hasVerb =
+    /you have (?:sent|received|paid)|withdraw(?:n|al)?|deposit(?:ed)?|bought|purchased|topped?\s*up/i.test(
+      text,
+    );
+  const hasRefOrBrand =
+    /(?:transaction id|trans(?:action)? ref|reference)[:\s]/i.test(text) ||
+    /airtel\s*money/i.test(text);
+  return hasMoney && hasVerb && hasRefOrBrand;
+}
+
 export function parseAirtel(raw: string): Omit<Transaction, "category"> | null {
   const text = raw.trim();
+  if (!isAirtelTransaction(text)) return null;
+
   if (/failed|could not|unable to complete|did not go through|unsuccessful/i.test(text)) {
     const amt = text.match(/Ksh?(?:s)?\s*([\d,]+(?:\.\d+)?)/i);
     return {
