@@ -87,7 +87,7 @@ src/
 │   ├── storage.ts          # localStorage persistence + merge/de-dup
 │   └── format.ts           # currency/date formatting, category colors & icons
 ├── data/sampleMessages.ts  # realistic sample inbox (fictional data)
-├── components/             # React UI (dashboard, charts, import, ledger)
+├── components/             # React UI (hero, avatar rows, charts, import, ledger)
 ├── App.tsx                 # state, range filtering, layout
 └── main.tsx
 ```
@@ -112,6 +112,16 @@ spam are rejected by two independent filters:
 2. **A sender allowlist** (for imports that carry the SMS sender). Messages from
    anything other than the M-Pesa / Airtel Money senders are skipped before
    parsing even begins.
+
+### Interface
+
+Trak is styled as a mobile-first neobank app: a phone-width app column on a
+sage backdrop, a signature hero card showing your **latest M-Pesa / Airtel Money
+balance** (parsed from "New balance is …") with a net-flow delta, avatar-led
+transaction rows grouped by day (Today / Yesterday / date), and a floating
+bottom nav with **Home · Activity · Trends** plus a center Import action. It
+reads full-screen on a phone and as a centered device-style column on desktop,
+with light and dark themes.
 
 ### Data-visualization
 

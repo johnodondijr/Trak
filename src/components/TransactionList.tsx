@@ -1,20 +1,28 @@
 import { useMemo, useState } from "react";
 import type { Transaction, Category } from "../lib/parser/types";
 import {
-  categoryColor,
-  categoryIcon,
   categoryLabel,
-  formatDateTime,
+  dateGroupLabel,
+  formatTime,
   kes,
   typeLabel,
 } from "../lib/format";
+import { Avatar } from "./Avatar";
 
 /**
- * The full transaction ledger with a free-text search and a category filter.
- * Each row shows the counterparty, type, date, category chip and the signed
- * amount (green in / red out), plus any charge.
+ * The transaction ledger, styled as avatar-led rows grouped by day
+ * (Today / Yesterday / date). In full mode it adds a search box and category
+ * filter; in {@link compact} mode it's a bare recent-activity preview.
  */
-export function TransactionList({ transactions }: { transactions: Transaction[] }) {
+export function TransactionList({
+  transactions,
+  now = new Date(),
+  compact = false,
+}: {
+  transactions: Transaction[];
+  now?: Date;
+  compact?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | "all">("all");
 
@@ -38,15 +46,32 @@ export function TransactionList({ transactions }: { transactions: Transaction[] 
     });
   }, [transactions, query, category]);
 
-  return (
-    <div className="card">
-      <div className="card-head">
-        <h2>Transactions</h2>
-        <span className="sub">
-          {filtered.length} of {transactions.length}
-        </span>
-      </div>
+  // Group by day label, preserving the newest-first order.
+  const groups = useMemo(() => {
+    const map = new Map<string, Transaction[]>();
+    for (const t of filtered) {
+      const key = dateGroupLabel(t.date, now);
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    }
+    return [...map.entries()];
+  }, [filtered, now]);
 
+  if (compact) {
+    return (
+      <div>
+        {transactions.length === 0 ? (
+          <div className="tx-empty">No transactions yet.</div>
+        ) : (
+          transactions.map((t) => <Row key={t.ref || t.raw} txn={t} />)
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
       <div className="tx-toolbar">
         <input
           type="search"
@@ -60,7 +85,7 @@ export function TransactionList({ transactions }: { transactions: Transaction[] 
           onChange={(e) => setCategory(e.target.value as Category | "all")}
           aria-label="Filter by category"
         >
-          <option value="all">All categories</option>
+          <option value="all">All</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {categoryLabel(c)}
@@ -72,11 +97,16 @@ export function TransactionList({ transactions }: { transactions: Transaction[] 
       {filtered.length === 0 ? (
         <div className="tx-empty">No transactions match your filters.</div>
       ) : (
-        <div className="tx-list">
-          {filtered.map((t) => (
-            <Row key={t.ref || t.raw} txn={t} />
-          ))}
-        </div>
+        groups.map(([label, items]) => (
+          <div className="day-group" key={label}>
+            <div className="day-label">{label}</div>
+            <div className="card" style={{ padding: "4px 12px" }}>
+              {items.map((t) => (
+                <Row key={t.ref || t.raw} txn={t} />
+              ))}
+            </div>
+          </div>
+        ))
       )}
     </div>
   );
@@ -89,22 +119,22 @@ function Row({ txn }: { txn: Transaction }) {
   const amountClass = isIncome ? "pos" : isExpense ? "neg" : "";
   const title =
     txn.counterparty ??
-    (txn.type === "airtime" ? "Airtime" : txn.type === "balance" ? "Balance enquiry" : "Transaction");
+    (txn.type === "airtime"
+      ? "Airtime"
+      : txn.type === "balance"
+        ? "Balance enquiry"
+        : "Transaction");
 
   return (
     <div className="tx">
-      <div className="tx-ico" aria-hidden>
-        {categoryIcon(txn.category)}
-      </div>
+      <Avatar category={txn.category} />
       <div className="tx-main">
         <div className="tx-title">{title}</div>
         <div className="tx-meta">
-          <span className="tx-chip">
-            <i className="dot" style={{ background: categoryColor(txn.category) }} />
-            {categoryLabel(txn.category)}
-          </span>
           <span>{typeLabel(txn.type)}</span>
-          <span>{formatDateTime(txn.date)}</span>
+          <span>·</span>
+          <span>{formatTime(txn.date)}</span>
+          <span>·</span>
           <span style={{ textTransform: "uppercase" }}>{txn.provider}</span>
         </div>
       </div>

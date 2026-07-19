@@ -38,8 +38,55 @@ const timeFormatter = new Intl.DateTimeFormat("en-KE", {
 export function formatDate(d: Date): string {
   return dateFormatter.format(d);
 }
+export function formatTime(d: Date): string {
+  return timeFormatter.format(d);
+}
 export function formatDateTime(d: Date): string {
   return `${dateFormatter.format(d)} · ${timeFormatter.format(d)}`;
+}
+
+const groupFormatter = new Intl.DateTimeFormat("en-KE", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
+const groupFormatterWithYear = new Intl.DateTimeFormat("en-KE", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+/** Day-level heading for a transaction group: "Today", "Yesterday" or a date. */
+export function dateGroupLabel(d: Date, now: Date = new Date()): string {
+  const startOfDay = (x: Date) => {
+    const y = new Date(x);
+    y.setHours(0, 0, 0, 0);
+    return y.getTime();
+  };
+  const today = startOfDay(now);
+  const that = startOfDay(d);
+  const dayMs = 86_400_000;
+  if (that === today) return "Today";
+  if (that === today - dayMs) return "Yesterday";
+  if (d.getFullYear() === now.getFullYear()) return groupFormatter.format(d);
+  return groupFormatterWithYear.format(d);
+}
+
+/** Initials for an avatar chip, e.g. "JOHN KAMAU" → "JK", "Naivas" → "NA". */
+export function initials(name: string | null | undefined): string {
+  if (!name) return "•";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "•";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/** Time-of-day greeting for the header. */
+export function greeting(now: Date = new Date()): string {
+  const h = now.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
 }
 
 const CATEGORY_LABELS: Record<Category, string> = {

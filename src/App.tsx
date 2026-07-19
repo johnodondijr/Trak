@@ -4,6 +4,7 @@ import { parseMessages } from "./lib/parser/index";
 import {
   byCategory,
   insights,
+  latestBalance,
   monthlyTrend,
   summarize,
   topCounterparties,
@@ -16,7 +17,7 @@ import {
   saveTransactions,
 } from "./lib/storage";
 import { SAMPLE_MESSAGES } from "./data/sampleMessages";
-import { SummaryCards } from "./components/SummaryCards";
+import { kes, greeting } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
 import { MonthlyTrendChart } from "./components/MonthlyTrendChart";
@@ -27,25 +28,30 @@ import { ImportModal } from "./components/ImportModal";
 type Range = "today" | "week" | "month" | "all";
 const RANGE_LABELS: Record<Range, string> = {
   today: "Today",
-  week: "This week",
-  month: "This month",
-  all: "All time",
+  week: "Week",
+  month: "Month",
+  all: "All",
+};
+const RANGE_PHRASE: Record<Range, string> = {
+  today: "today",
+  week: "this week",
+  month: "this month",
+  all: "all time",
 };
 
+type Tab = "overview" | "activity" | "trends";
 type Theme = "light" | "dark";
 
 export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => loadTransactions());
   const [range, setRange] = useState<Range>("month");
+  const [tab, setTab] = useState<Tab>("overview");
   const [importing, setImporting] = useState(false);
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem("trak.theme") as Theme) || "light",
   );
 
-  // Persist transactions and theme whenever they change.
-  useEffect(() => {
-    saveTransactions(transactions);
-  }, [transactions]);
+  useEffect(() => saveTransactions(transactions), [transactions]);
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("trak.theme", theme);
@@ -53,157 +59,295 @@ export default function App() {
 
   const now = useMemo(() => new Date(), []);
   const summary = useMemo(() => summarize(transactions, now), [transactions, now]);
-
-  // Transactions constrained to the selected reporting window.
   const inRange = useMemo(() => filterByRange(transactions, range, now), [transactions, range, now]);
-
-  const rangeTotals = useMemo(() => {
-    if (range === "all") return summary.all;
-    return totals(inRange);
-  }, [range, summary, inRange]);
-
+  const rangeTotals = useMemo(
+    () => (range === "all" ? summary.all : totals(inRange)),
+    [range, summary, inRange],
+  );
   const categories = useMemo(() => byCategory(inRange), [inRange]);
-  const recipients = useMemo(() => topCounterparties(inRange, 6), [inRange]);
   const trend = useMemo(() => monthlyTrend(transactions), [transactions]);
   const tips = useMemo(() => insights(transactions, now), [transactions, now]);
+  const balance = useMemo(() => latestBalance(transactions), [transactions]);
 
-  // When imported data has nothing in the current month, the default "This
-  // month" view would look empty even though the ledger is full — so widen the
-  // range to "All time" to make freshly imported (often historical) data
-  // visible right away.
   function revealImported(merged: Transaction[]) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const hasThisMonth = merged.some((t) => t.date.getTime() >= monthStart);
-    if (!hasThisMonth) setRange("all");
+    if (!merged.some((t) => t.date.getTime() >= monthStart)) setRange("all");
   }
-
   function handleImport(incoming: Transaction[]) {
     const merged = mergeTransactions(transactions, incoming);
     setTransactions(merged);
     revealImported(merged);
   }
-
   function loadSample() {
     const { transactions: sample } = parseMessages(SAMPLE_MESSAGES);
     const merged = mergeTransactions(transactions, sample);
     setTransactions(merged);
     revealImported(merged);
   }
-
   function handleClear() {
     if (confirm("Remove all imported transactions? This can't be undone.")) {
       clearTransactions();
       setTransactions([]);
+      setTab("overview");
     }
   }
 
   const hasData = transactions.length > 0;
+  const spent = rangeTotals.expense + rangeTotals.charges;
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-mark">T</div>
-          <div>
-            <h1>Trak</h1>
-            <p>Mobile money spending tracker · M-Pesa &amp; Airtel Money</p>
+    <div className="device">
+      <div className="screen">
+        <header className="app-header">
+          <div className="hi">
+            <div className="hi-logo">T</div>
+            <div>
+              <small>{greeting(now)}</small>
+              <h1>Your money on Trak</h1>
+            </div>
           </div>
-        </div>
-        <div className="topbar-actions">
-          {hasData && (
-            <button className="btn btn-primary" onClick={() => setImporting(true)}>
-              Import messages
+          <div className="header-actions">
+            <button
+              className="icon-btn"
+              onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+              aria-label="Toggle dark mode"
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
             </button>
-          )}
-          <button
-            className="btn btn-icon"
-            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            {theme === "dark" ? "☀️" : "🌙"}
+            <button className="icon-btn" onClick={() => setImporting(true)} aria-label="Import">
+              ＋
+            </button>
+          </div>
+        </header>
+
+        {!hasData ? (
+          <EmptyState onImport={() => setImporting(true)} onSample={loadSample} />
+        ) : (
+          <>
+            {tab === "overview" && (
+              <>
+                <HeroCard
+                  balance={balance}
+                  rangeNet={rangeTotals.net}
+                  rangePhrase={RANGE_PHRASE[range]}
+                />
+
+                <div className="quick">
+                  <button onClick={() => setImporting(true)}>
+                    <span className="q-circle">＋</span>
+                    Import
+                  </button>
+                  <button onClick={() => setTab("activity")}>
+                    <span className="q-circle">📥</span>
+                    Activity
+                  </button>
+                  <button onClick={() => setTab("trends")}>
+                    <span className="q-circle">📈</span>
+                    Trends
+                  </button>
+                </div>
+
+                <div className="section" style={{ marginTop: 16 }}>
+                  <div className="segmented" role="group" aria-label="Period">
+                    {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
+                      <button key={r} aria-pressed={range === r} onClick={() => setRange(r)}>
+                        {RANGE_LABELS[r]}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mini-stats">
+                    <Mini label="In" dot="var(--income)" value={kes(rangeTotals.income)} cls="pos" />
+                    <Mini label="Out" dot="var(--expense)" value={kes(spent)} cls="neg" />
+                    <Mini label="Charges" dot="var(--muted)" value={kes(rangeTotals.charges)} />
+                  </div>
+                </div>
+
+                <section className="section">
+                  <div className="section-head">
+                    <h2>Spending by category</h2>
+                    <span className="sub">{RANGE_PHRASE[range]}</span>
+                  </div>
+                  <div className="card">
+                    <CategoryBreakdown data={categories} />
+                  </div>
+                </section>
+
+                <section className="section">
+                  <div className="section-head">
+                    <h2>Insights</h2>
+                    <button className="link" onClick={() => setTab("trends")}>
+                      See trends
+                    </button>
+                  </div>
+                  <InsightsPanel insights={tips} />
+                </section>
+
+                <RecentPreview transactions={transactions} onSeeAll={() => setTab("activity")} />
+              </>
+            )}
+
+            {tab === "activity" && (
+              <section className="section" style={{ marginTop: 4 }}>
+                <div className="section-head">
+                  <h2>Activity</h2>
+                  <span className="sub">{transactions.length} transactions</span>
+                </div>
+                <TransactionList transactions={transactions} now={now} />
+              </section>
+            )}
+
+            {tab === "trends" && (
+              <>
+                <section className="section" style={{ marginTop: 4 }}>
+                  <div className="section-head">
+                    <h2>Monthly trend</h2>
+                    <span className="sub">income vs spending</span>
+                  </div>
+                  <div className="card">
+                    <MonthlyTrendChart data={trend} />
+                  </div>
+                </section>
+                <section className="section">
+                  <div className="section-head">
+                    <h2>Top recipients</h2>
+                    <span className="sub">all time</span>
+                  </div>
+                  <div className="card">
+                    <TopRecipients data={topCounterparties(transactions, 6)} />
+                  </div>
+                </section>
+                <section className="section">
+                  <div className="section-head">
+                    <h2>All-time categories</h2>
+                  </div>
+                  <div className="card">
+                    <CategoryBreakdown data={byCategory(transactions)} />
+                  </div>
+                </section>
+                <div className="footer">
+                  <button className="btn btn-ghost" onClick={handleClear}>
+                    Clear all data
+                  </button>
+                  <p>Trak reads your messages locally in your browser. Nothing is uploaded.</p>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {hasData && (
+        <nav className="tabbar">
+          <button aria-current={tab === "overview"} onClick={() => setTab("overview")}>
+            <span className="tico">🏠</span>
+            Home
           </button>
-        </div>
-      </header>
-
-      {!hasData ? (
-        <EmptyState onImport={() => setImporting(true)} onSample={loadSample} />
-      ) : (
-        <>
-          <div className="topbar" style={{ marginBottom: 16 }}>
-            <div className="range-tabs" role="group" aria-label="Reporting period">
-              {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
-                <button
-                  key={r}
-                  aria-pressed={range === r}
-                  onClick={() => setRange(r)}
-                >
-                  {RANGE_LABELS[r]}
-                </button>
-              ))}
-            </div>
-            <span className="sub" style={{ color: "var(--muted)", fontSize: 12.5 }}>
-              {transactions.length} transactions tracked
-            </span>
-          </div>
-
-          <SummaryCards totals={rangeTotals} rangeLabel={RANGE_LABELS[range]} />
-
-          <div className="grid panels">
-            <div className="card">
-              <div className="card-head">
-                <h2>Spending by category</h2>
-                <span className="sub">{RANGE_LABELS[range]}</span>
-              </div>
-              <CategoryBreakdown data={categories} />
-            </div>
-
-            <div className="card">
-              <div className="card-head">
-                <h2>Insights</h2>
-                <span className="sub">all time</span>
-              </div>
-              <InsightsPanel insights={tips} />
-            </div>
-          </div>
-
-          <div className="grid panels" style={{ marginTop: 16 }}>
-            <div className="card">
-              <div className="card-head">
-                <h2>Monthly trend</h2>
-                <span className="sub">income vs spending</span>
-              </div>
-              <MonthlyTrendChart data={trend} />
-            </div>
-
-            <div className="card">
-              <div className="card-head">
-                <h2>Top recipients</h2>
-                <span className="sub">{RANGE_LABELS[range]}</span>
-              </div>
-              <TopRecipients data={recipients} />
-            </div>
-          </div>
-
-          <div style={{ marginTop: 16 }}>
-            <TransactionList transactions={transactions} />
-          </div>
-
-          <div className="footer">
-            <button className="btn btn-ghost" onClick={handleClear}>
-              Clear all data
-            </button>
-            <p style={{ marginTop: 12 }}>
-              Trak reads your mobile money messages locally in your browser. Nothing is uploaded.
-            </p>
-          </div>
-        </>
+          <button aria-current={tab === "activity"} onClick={() => setTab("activity")}>
+            <span className="tico">📥</span>
+            Activity
+          </button>
+          <button className="primary" onClick={() => setImporting(true)} aria-label="Import">
+            <span className="tico">＋</span>
+          </button>
+          <button aria-current={tab === "trends"} onClick={() => setTab("trends")}>
+            <span className="tico">📈</span>
+            Trends
+          </button>
+          <button
+            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+            aria-label="Toggle theme"
+          >
+            <span className="tico">{theme === "dark" ? "☀️" : "🌙"}</span>
+            Theme
+          </button>
+        </nav>
       )}
 
-      {importing && (
-        <ImportModal onClose={() => setImporting(false)} onImport={handleImport} />
-      )}
+      {importing && <ImportModal onClose={() => setImporting(false)} onImport={handleImport} />}
     </div>
+  );
+}
+
+function HeroCard({
+  balance,
+  rangeNet,
+  rangePhrase,
+}: {
+  balance: ReturnType<typeof latestBalance>;
+  rangeNet: number;
+  rangePhrase: string;
+}) {
+  const hasBalance = balance != null;
+  const bigValue = hasBalance ? balance!.amount : Math.abs(rangeNet);
+  const providerLabel =
+    balance?.provider === "airtel" ? "Airtel Money" : balance?.provider === "mpesa" ? "M-PESA" : "Wallet";
+  const up = rangeNet >= 0;
+  return (
+    <section className="hero">
+      <div className="hero-top">
+        <span className="hero-label">{hasBalance ? "Balance" : `Net ${rangePhrase}`}</span>
+        <span className="hero-chip">
+          <span className="brandmark" />
+          {providerLabel}
+        </span>
+      </div>
+      <div className="hero-amount">
+        <span className="cur">KES</span>
+        {Math.round(bigValue).toLocaleString("en-KE")}
+      </div>
+      <div className="hero-delta">
+        <span className="pill">
+          {up ? "▲" : "▼"} {kes(Math.abs(rangeNet))}
+        </span>
+        net {rangePhrase}
+      </div>
+    </section>
+  );
+}
+
+function Mini({
+  label,
+  value,
+  dot,
+  cls,
+}: {
+  label: string;
+  value: string;
+  dot: string;
+  cls?: string;
+}) {
+  return (
+    <div className="mini">
+      <div className="lbl">
+        <i className="dot" style={{ background: dot }} />
+        {label}
+      </div>
+      <div className={`val ${cls ?? ""}`}>{value}</div>
+    </div>
+  );
+}
+
+/** A short "latest transactions" preview shown on the overview tab. */
+function RecentPreview({
+  transactions,
+  onSeeAll,
+}: {
+  transactions: Transaction[];
+  onSeeAll: () => void;
+}) {
+  const recent = transactions.slice(0, 4);
+  return (
+    <section className="section">
+      <div className="section-head">
+        <h2>Latest transactions</h2>
+        <button className="link" onClick={onSeeAll}>
+          See all
+        </button>
+      </div>
+      <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
+        <TransactionList transactions={recent} compact />
+      </div>
+    </section>
   );
 }
 
@@ -213,23 +357,21 @@ function EmptyState({ onImport, onSample }: { onImport: () => void; onSample: ()
       <div className="big">📊</div>
       <h2>Turn your M-Pesa &amp; Airtel messages into insights</h2>
       <p>
-        Paste your mobile money SMS messages and Trak automatically organizes them into spending
-        reports, income summaries, and financial insights — so you know exactly where your money
-        goes.
+        Import your mobile money messages and Trak organizes them into spending reports, income
+        summaries and insights — so you know exactly where your money goes.
       </p>
       <div className="empty-actions">
         <button className="btn btn-primary" onClick={onImport}>
           Import your messages
         </button>
         <button className="btn" onClick={onSample}>
-          Try with sample data
+          Try sample data
         </button>
       </div>
     </div>
   );
 }
 
-/** Slice a transaction list down to the selected reporting window. */
 function filterByRange(txns: Transaction[], range: Range, now: Date): Transaction[] {
   if (range === "all") return txns;
   const start = new Date(now);
@@ -237,8 +379,7 @@ function filterByRange(txns: Transaction[], range: Range, now: Date): Transactio
     start.setHours(0, 0, 0, 0);
   } else if (range === "week") {
     start.setHours(0, 0, 0, 0);
-    const day = (start.getDay() + 6) % 7;
-    start.setDate(start.getDate() - day);
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
   } else {
     start.setDate(1);
     start.setHours(0, 0, 0, 0);

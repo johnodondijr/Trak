@@ -143,7 +143,7 @@ export function MonthlyTrendChart({ data }: { data: MonthlyPoint[] }) {
             style={{
               background: "var(--surface-1)",
               border: "1px solid var(--border)",
-              boxShadow: "var(--shadow)",
+              boxShadow: "var(--shadow-card)",
               borderRadius: 8,
               padding: "8px 12px",
               fontSize: 12.5,

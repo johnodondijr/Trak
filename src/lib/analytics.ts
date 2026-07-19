@@ -49,6 +49,27 @@ export interface MonthlyPoint {
 /** Transaction types that represent real spending (money leaving the wallet). */
 const SPEND_TYPES = new Set(["send", "till", "paybill", "airtime", "withdraw"]);
 
+export interface BalanceSnapshot {
+  amount: number;
+  date: Date;
+  provider: Transaction["provider"];
+}
+
+/**
+ * The most recent wallet balance Trak knows about — taken from the newest
+ * transaction that reported a "New balance is …" figure. Powers the hero card.
+ */
+export function latestBalance(txns: Transaction[]): BalanceSnapshot | null {
+  let best: BalanceSnapshot | null = null;
+  for (const t of txns) {
+    if (t.balance == null) continue;
+    if (!best || t.date.getTime() > best.date.getTime()) {
+      best = { amount: t.balance, date: t.date, provider: t.provider };
+    }
+  }
+  return best;
+}
+
 /** Sum the money-movement figures for a slice of transactions. */
 export function totals(txns: Transaction[]): Totals {
   let income = 0;
