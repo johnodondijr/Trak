@@ -94,6 +94,12 @@ src/
 
 ### How parsing works
 
+Alongside M-Pesa and Airtel Money, Trak also parses **bank-sourced** messages
+(`src/lib/parser/bank.ts`): card-purchase alerts (e.g. I&M), bank→M-Pesa credits
+(e.g. Equity), and sends from bank apps that settle on M-Pesa (e.g. Co-op /
+MCoopCash). Each carries its originating **institution** for display, and money
+that moves over the M-Pesa rail keeps `provider: "mpesa"`.
+
 Each provider has a set of loosely-matched templates tried most-specific first
 (e.g. a Paybill `"...for account..."` clause is matched before a plain send).
 The matchers tolerate extra clauses and small wording changes between provider
@@ -102,16 +108,16 @@ than silently dropped. Batch imports de-duplicate by transaction code, so
 re-importing the same inbox is idempotent.
 
 **Only official transactions are recognized** — promos, reminders, adverts and
-spam are rejected by two independent filters:
-
-1. **A structural gate** (runs on every import path, including paste). A genuine
-   M-Pesa SMS must begin with a transaction code + `Confirmed`/`Failed`; a
-   genuine Airtel Money SMS must state a money verb in shillings *and* carry a
-   `Transaction ID` or the `Airtel Money` tag. "Buy 5GB for Ksh300", "Your
-   balance is Ksh1,250", loan adverts and the like never match this shape.
-2. **A sender allowlist** (for imports that carry the SMS sender). Messages from
-   anything other than the M-Pesa / Airtel Money senders are skipped before
-   parsing even begins.
+spam are rejected by **strict structural parsing**, which runs on every import
+path (file or paste). A genuine M-Pesa SMS must begin with a transaction code +
+`Confirmed`/`Failed`; a genuine Airtel Money SMS must state a money verb in
+shillings *and* carry a `Transaction ID` or the `Airtel Money` tag; a bank
+message must match one of the specific bank templates (card purchase, bank→M-Pesa
+credit, bank-app send with an M-Pesa reference). "Buy 5GB for Ksh300", "Your
+balance is Ksh1,250", "Get a loan of KES 50,000" and the like match none of
+these shapes and are skipped. Precision comes from the parsers themselves, so no
+sender allowlist is needed — which means bank SMS (from many different senders)
+are never pre-filtered out.
 
 ### Interface
 

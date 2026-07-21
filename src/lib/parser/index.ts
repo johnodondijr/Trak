@@ -9,6 +9,7 @@
 import type { Transaction, Provider } from "./types";
 import { parseMpesa, isMpesa } from "./mpesa";
 import { parseAirtel, isAirtel } from "./airtel";
+import { parseBank } from "./bank";
 import { categorize } from "../categorize";
 
 export * from "./types";
@@ -40,6 +41,9 @@ export function parseMessage(raw: string, hint?: Provider | null): Transaction |
       return { ...parsed, category: categorize(parsed) };
     }
   }
+  // Fall back to bank-sourced templates (card purchases, bank-app transfers).
+  const bank = parseBank(text);
+  if (bank) return { ...bank, category: categorize(bank) };
   return null;
 }
 

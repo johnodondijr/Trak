@@ -89,6 +89,9 @@ const KEYWORD_RULES: Array<{ category: Category; keywords: string[] }> = [
       "netflix",
       "showmax",
       "spotify",
+      "youtube",
+      "prime video",
+      "dazn",
       "bet",
       "sportpesa",
       "betika",
@@ -98,6 +101,7 @@ const KEYWORD_RULES: Array<{ category: Category; keywords: string[] }> = [
       "lounge",
       "game",
       "playstation",
+      "steam",
     ],
   },
   {

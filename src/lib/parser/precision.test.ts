@@ -70,8 +70,8 @@ describe("still parses genuine transactions", () => {
   });
 });
 
-describe("sender allowlist on import", () => {
-  it("skips messages from non-M-Pesa/Airtel senders even if they look transactional", () => {
+describe("non-transaction rejection on import", () => {
+  it("skips loan-advert style messages, keeping only genuine transactions", () => {
     const xml = `<?xml version="1.0"?><smses count="2">
       <sms address="QuickLoan" date="1751525520000" type="1" body="Ksh5,000.00 sent to your account on approval. Repay in 30 days." />
       <sms address="MPESA" date="1751525520000" type="1" body="TFA1B2C3D4 Confirmed. Ksh1,500.00 sent to JOHN KAMAU 0712345678 on 3/7/26 at 8:32 AM. New M-PESA balance is Ksh12,480.00. Transaction cost, Ksh25.00." />

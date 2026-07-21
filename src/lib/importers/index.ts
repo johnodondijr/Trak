@@ -59,26 +59,14 @@ export function importContent(content: string, filename = ""): ImportResult {
   });
 }
 
-/**
- * Only messages from the official M-Pesa / Airtel Money senders are considered.
- * This drops promos from other short-codes, bank/utility adverts and personal
- * contacts up front. A missing address (e.g. a plain-text paste) passes through
- * to the structural gate in the parser, which does the real precision filtering.
- */
-function isMoneySender(address: string | null | undefined): boolean {
-  if (!address || address.trim() === "") return true;
-  return /m-?pesa|airtel/i.test(address);
-}
-
 function importSmsBackup(content: string): ImportResult {
   const messages = parseSmsBackup(content);
   const transactions: Transaction[] = [];
   let skipped = 0;
+  // Every message is offered to the parsers; only genuine transactions (M-Pesa,
+  // Airtel or a known bank template) survive. Precision comes from the strict
+  // parsers, not from a sender allowlist — so bank SMS aren't pre-filtered out.
   for (const sms of messages) {
-    if (!isMoneySender(sms.address)) {
-      skipped++;
-      continue;
-    }
     const txn = parseSms(sms);
     if (txn) transactions.push(txn);
     else skipped++;
@@ -113,10 +101,6 @@ function importTable(table: DelimitedTable): ImportResult {
       continue;
     }
     const address = addrIdx >= 0 ? row[addrIdx] : null;
-    if (!isMoneySender(address)) {
-      skipped++;
-      continue;
-    }
     const rawDate = dateIdx >= 0 ? row[dateIdx] : "";
     const txn = parseSms({ body, address, date: parseFlexibleDate(rawDate) });
     if (txn) transactions.push(txn);

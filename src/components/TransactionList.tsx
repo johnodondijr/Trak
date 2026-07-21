@@ -135,7 +135,9 @@ function Row({ txn }: { txn: Transaction }) {
           <span>·</span>
           <span>{formatTime(txn.date)}</span>
           <span>·</span>
-          <span style={{ textTransform: "uppercase" }}>{txn.provider}</span>
+          <span style={{ textTransform: txn.institution ? "none" : "uppercase" }}>
+            {txn.institution ?? txn.provider}
+          </span>
         </div>
       </div>
       <div>

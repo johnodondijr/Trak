@@ -20,9 +20,19 @@ export function parseAmount(input: string | null | undefined): number {
  */
 export function cleanName(input: string | null | undefined): string | null {
   if (!input) return null;
-  const name = input.replace(/\s+/g, " ").trim().replace(/[.,]+$/, "").trim();
+  let name = input.replace(/\s+/g, " ").trim();
+  name = name.replace(/[.,]+$/, "").trim();
+  // Strip a trailing phone / account number, masked or not, that some templates
+  // leave attached to the name, e.g. "MAXWELL OCHIENG 0769***211" or
+  // "DANIEL CHUMA 01116******500" -> just the name. Requires 5+ digit/mask chars
+  // so short suffixes in real names ("Duka 3") survive.
+  name = name.replace(/[\s,-]+\+?\d[\d*]{4,}$/, "").trim();
+  name = name.replace(/[.,]+$/, "").trim();
   return name === "" ? null : name;
 }
+
+/** A currency-amount regex fragment covering "Ksh", "Ksh.", "KES", "KShs.". */
+export const CURRENCY = "(?:KES|KShs|Ksh)\\.?\\s*";
 
 const MONTHS: Record<string, number> = {
   jan: 0,
@@ -74,6 +84,14 @@ export function parseDate(rawInput: string, fallback: Date = new Date()): Date {
   // date (e.g. Fuliza states a due date), never the transaction time. Without
   // this, a message with no timestamp would be mis-dated to its due date.
   const raw = rawInput.replace(/\bdue\s+(?:on|by)\b[^.,]*/gi, " ");
+
+  // ISO-ish form used by bank card alerts: "2026-07-21 10:19:31".
+  const iso = raw.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (iso) {
+    const [, y, mo, dd, hh, mi, se] = iso;
+    const d = new Date(+y, +mo - 1, +dd, +hh, +mi, se ? +se : 0);
+    if (!isNaN(d.getTime())) return d;
+  }
 
   // Numeric form: d/m/yy or d/m/yyyy, optional time with am/pm.
   const numeric = raw.match(

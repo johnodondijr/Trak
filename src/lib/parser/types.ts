@@ -7,8 +7,8 @@
  * place that has to know about the messy provider-specific text formats.
  */
 
-/** Which mobile-money network the message came from. */
-export type Provider = "mpesa" | "airtel";
+/** Which network/rail the message came from. */
+export type Provider = "mpesa" | "airtel" | "bank";
 
 /**
  * The kind of transaction, derived from the message wording.
@@ -70,6 +70,8 @@ export interface Transaction {
   counterparty: string | null;
   /** Phone number or till/paybill/account number, when present. */
   account: string | null;
+  /** Originating institution for bank-sourced messages, e.g. "I&M", "Equity". */
+  institution?: string | null;
   /** When the transaction happened (parsed from the message). */
   date: Date;
   /** Spending category assigned by the categorizer. */
