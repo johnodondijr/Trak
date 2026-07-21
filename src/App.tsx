@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Transaction } from "./lib/parser/types";
+import type { Transaction, Category } from "./lib/parser/types";
 import { parseMessages } from "./lib/parser/index";
 import {
   byCategory,
@@ -24,6 +24,8 @@ import { TopRecipients } from "./components/TopRecipients";
 import { MonthlyTrendChart } from "./components/MonthlyTrendChart";
 import { InsightsPanel } from "./components/InsightsPanel";
 import { TransactionList } from "./components/TransactionList";
+import { TransactionDetail } from "./components/TransactionDetail";
+import { EmptyLanding } from "./components/EmptyLanding";
 import { ImportModal } from "./components/ImportModal";
 
 type Range = "today" | "week" | "month" | "all";
@@ -48,6 +50,11 @@ export default function App() {
   const [range, setRange] = useState<Range>("month");
   const [tab, setTab] = useState<Tab>("overview");
   const [importing, setImporting] = useState(false);
+  const [detailTxn, setDetailTxn] = useState<Transaction | null>(null);
+  const [activityPreset, setActivityPreset] = useState<{
+    query?: string;
+    category?: Category | "all";
+  }>({});
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem("trak.theme") as Theme) || "light",
   );
@@ -88,6 +95,11 @@ export default function App() {
   }
   function clearSample() {
     setTransactions((prev) => stripSample(prev));
+  }
+  /** Jump to the Activity tab pre-filtered from a summary drill-down. */
+  function seeAllInActivity(preset: { query?: string; category?: Category | "all" }) {
+    setActivityPreset({ query: preset.query ?? "", category: preset.category ?? "all" });
+    setTab("activity");
   }
   function handleClear() {
     if (confirm("Remove all imported transactions? This can't be undone.")) {
@@ -141,7 +153,7 @@ export default function App() {
         )}
 
         {!hasData ? (
-          <EmptyState onImport={() => setImporting(true)} onSample={loadSample} />
+          <EmptyLanding onImport={() => setImporting(true)} onSample={loadSample} />
         ) : (
           <>
             {tab === "overview" && (
@@ -188,7 +200,12 @@ export default function App() {
                     <span className="sub">{RANGE_PHRASE[range]}</span>
                   </div>
                   <div className="card">
-                    <CategoryBreakdown data={categories} />
+                    <CategoryBreakdown
+                      data={categories}
+                      transactions={inRange}
+                      onOpenTxn={setDetailTxn}
+                      onSeeAll={(c) => seeAllInActivity({ category: c })}
+                    />
                   </div>
                 </section>
 
@@ -202,7 +219,11 @@ export default function App() {
                   <InsightsPanel insights={tips} />
                 </section>
 
-                <RecentPreview transactions={transactions} onSeeAll={() => setTab("activity")} />
+                <RecentPreview
+                  transactions={transactions}
+                  onSeeAll={() => seeAllInActivity({})}
+                  onOpenTxn={setDetailTxn}
+                />
               </>
             )}
 
@@ -212,7 +233,13 @@ export default function App() {
                   <h2>Activity</h2>
                   <span className="sub">{transactions.length} transactions</span>
                 </div>
-                <TransactionList transactions={transactions} now={now} />
+                <TransactionList
+                  transactions={transactions}
+                  now={now}
+                  onOpenTxn={setDetailTxn}
+                  presetQuery={activityPreset.query}
+                  presetCategory={activityPreset.category}
+                />
               </section>
             )}
 
@@ -233,7 +260,12 @@ export default function App() {
                     <span className="sub">all time</span>
                   </div>
                   <div className="card">
-                    <TopRecipients data={topCounterparties(transactions, 6)} />
+                    <TopRecipients
+                      data={topCounterparties(transactions, 6)}
+                      transactions={transactions}
+                      onOpenTxn={setDetailTxn}
+                      onSeeAll={(name) => seeAllInActivity({ query: name })}
+                    />
                   </div>
                 </section>
                 <section className="section">
@@ -241,7 +273,12 @@ export default function App() {
                     <h2>All-time categories</h2>
                   </div>
                   <div className="card">
-                    <CategoryBreakdown data={byCategory(transactions)} />
+                    <CategoryBreakdown
+                      data={byCategory(transactions)}
+                      transactions={transactions}
+                      onOpenTxn={setDetailTxn}
+                      onSeeAll={(c) => seeAllInActivity({ category: c })}
+                    />
                   </div>
                 </section>
                 <div className="footer">
@@ -284,6 +321,7 @@ export default function App() {
       )}
 
       {importing && <ImportModal onClose={() => setImporting(false)} onImport={handleImport} />}
+      {detailTxn && <TransactionDetail txn={detailTxn} onClose={() => setDetailTxn(null)} />}
     </div>
   );
 }
@@ -351,9 +389,11 @@ function Mini({
 function RecentPreview({
   transactions,
   onSeeAll,
+  onOpenTxn,
 }: {
   transactions: Transaction[];
   onSeeAll: () => void;
+  onOpenTxn: (t: Transaction) => void;
 }) {
   const recent = transactions.slice(0, 4);
   return (
@@ -365,30 +405,9 @@ function RecentPreview({
         </button>
       </div>
       <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
-        <TransactionList transactions={recent} compact />
+        <TransactionList transactions={recent} compact onOpenTxn={onOpenTxn} />
       </div>
     </section>
-  );
-}
-
-function EmptyState({ onImport, onSample }: { onImport: () => void; onSample: () => void }) {
-  return (
-    <div className="empty-state">
-      <div className="big">📊</div>
-      <h2>Turn your M-Pesa &amp; Airtel messages into insights</h2>
-      <p>
-        Import your mobile money messages and Trak organizes them into spending reports, income
-        summaries and insights — so you know exactly where your money goes.
-      </p>
-      <div className="empty-actions">
-        <button className="btn btn-primary" onClick={onImport}>
-          Import your messages
-        </button>
-        <button className="btn" onClick={onSample}>
-          Try sample data
-        </button>
-      </div>
-    </div>
   );
 }
 

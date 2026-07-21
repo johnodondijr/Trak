@@ -129,6 +129,21 @@ bottom nav with **Home · Activity · Trends** plus a center Import action. It
 reads full-screen on a phone and as a centered device-style column on desktop,
 with light and dark themes.
 
+First-run shows a **landing screen** (floating-card hero + "Get started") that
+leads into a short onboarding explainer — why a one-time SMS backup is needed
+today, the three steps to do it, and a "coming soon: automatic SMS reading"
+note — before the user imports.
+
+Interactions:
+
+- **Tap any transaction** for a detail sheet with every field (amount, fee,
+  running balance, counterparty, account, source/institution, code, date) and
+  the original SMS.
+- **Summaries drill down**: tapping a spending category or a top recipient
+  expands the top transactions behind that total, with a **See all** link that
+  opens the full list pre-filtered — so "KES 1,000,000 to Daniel" breaks back
+  down into the individual payments.
+
 ### Data-visualization
 
 Charts follow a validated, colorblind-safe categorical palette and are explicitly
