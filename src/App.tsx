@@ -22,6 +22,7 @@ import { kes, greeting } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
 import { MonthlyTrendChart } from "./components/MonthlyTrendChart";
+import { CategoryDonut } from "./components/CategoryDonut";
 import { InsightsPanel } from "./components/InsightsPanel";
 import { TransactionList } from "./components/TransactionList";
 import { TransactionDetail } from "./components/TransactionDetail";
@@ -295,6 +296,15 @@ export default function App() {
                   </div>
                   <div className="card">
                     <MonthlyTrendChart data={trend} />
+                  </div>
+                </section>
+                <section className="section">
+                  <div className="section-head">
+                    <h2>Where your money goes</h2>
+                    <span className="sub">all time</span>
+                  </div>
+                  <div className="card">
+                    <CategoryDonut data={allCategories} />
                   </div>
                 </section>
                 <section className="section">

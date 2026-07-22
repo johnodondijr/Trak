@@ -698,6 +698,78 @@ button {
   font-size: 13.5px;
 }
 
+/* ---- Trend area chart ---- */
+.trend {
+  position: relative;
+}
+.trend-tip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  border-radius: 12px;
+  padding: 8px 11px;
+  font-size: 12px;
+  min-width: 128px;
+  pointer-events: none;
+  z-index: 2;
+}
+.trend-tip-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.trend-tip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+.trend-tip-row strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Category donut ---- */
+.donut {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.donut-ring {
+  flex: none;
+}
+.donut-legend {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.donut-legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+.donut-legend-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.donut-legend-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
 /* ---- Legend ---- */
 .legend {
   display: flex;
