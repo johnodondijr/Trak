@@ -129,10 +129,17 @@ bottom nav with **Home · Activity · Trends** plus a center Import action. It
 reads full-screen on a phone and as a centered device-style column on desktop,
 with light and dark themes.
 
-The UI uses a hand-built **line-icon set** (`src/components/icons.tsx`) rather
-than emoji — category glyphs, nav, actions and status all share one 24px/2px
-stroke style — plus soft icon chips, an animated fade between tabs, and a
-balance-hide toggle on the hero.
+The look is a **bold "FastPay"-style design** — vivid yellow + black + white,
+**Outfit** typography, a yellow balance card, black pill buttons, and a bottom
+nav with a yellow center action. Icons are a hand-built **line-icon set**
+(`src/components/icons.tsx`) — category glyphs, nav, actions and status share one
+24px/2px stroke style — plus soft icon chips, an animated fade between tabs, and
+a balance-hide toggle on the hero. The Trak mark is a geometric "T" with an
+upward-tilted crossbar (`src/components/TrakLogo.tsx`).
+
+**Installable (PWA):** Trak ships a web manifest, icons and a service worker, so
+it can be installed to a phone home screen / desktop and works offline. An
+"Install Trak" button appears when the browser offers it.
 
 First-run shows a **landing screen** (floating-card hero + "Get started") that
 leads into a short onboarding explainer — why a one-time SMS backup is needed

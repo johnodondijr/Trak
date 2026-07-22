@@ -23,6 +23,8 @@ import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
 import { MonthlyTrendChart } from "./components/MonthlyTrendChart";
 import { CategoryDonut } from "./components/CategoryDonut";
+import { TrakMark } from "./components/TrakLogo";
+import { InstallButton } from "./components/InstallButton";
 import { InsightsPanel } from "./components/InsightsPanel";
 import { TransactionList } from "./components/TransactionList";
 import { TransactionDetail } from "./components/TransactionDetail";
@@ -41,6 +43,7 @@ import {
   IconArrowDown,
   IconArrowDownLeft,
   IconArrowUpRight,
+  IconBulb,
 } from "./components/icons";
 
 type Range = "today" | "week" | "month" | "all";
@@ -140,13 +143,16 @@ export default function App() {
         <div className="screen">
         <header className="app-header">
           <div className="hi">
-            <div className="hi-logo">T</div>
+            <div className="hi-logo">
+              <TrakMark size={28} />
+            </div>
             <div>
-              <small>{greeting(now)}</small>
+              <small>{greeting(now)} 👋</small>
               <h1>Your money on Trak</h1>
             </div>
           </div>
           <div className="header-actions">
+            <InstallButton variant="header" />
             <button
               className="icon-btn"
               onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
@@ -203,6 +209,12 @@ export default function App() {
                       <IconTrends size={22} />
                     </span>
                     Trends
+                  </button>
+                  <button onClick={() => setTab("trends")}>
+                    <span className="q-circle">
+                      <IconBulb size={22} />
+                    </span>
+                    Insights
                   </button>
                 </div>
 
@@ -370,13 +382,6 @@ export default function App() {
               <IconTrends size={22} />
             </span>
             Trends
-          </button>
-          <button
-            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-            aria-label="Toggle theme"
-          >
-            <span className="tico">{theme === "dark" ? <IconSun size={22} /> : <IconMoon size={22} />}</span>
-            Theme
           </button>
         </nav>
       )}

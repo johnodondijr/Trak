@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { IconArrowDownLeft, IconTrends, CategoryGlyph } from "./icons";
+import { TrakLogo } from "./TrakLogo";
+import { InstallButton } from "./InstallButton";
 
 /**
  * First-run landing + onboarding. A bold hero (floating card collage, headline,
@@ -75,6 +77,9 @@ export function EmptyLanding({
 
   return (
     <div className="landing">
+      <div className="landing-brand">
+        <TrakLogo size={28} />
+      </div>
       <div className="collage" aria-hidden>
         <div className="c-card c-balance">
           <div className="c-brandline">
@@ -113,11 +118,12 @@ export function EmptyLanding({
           summaries and insights — automatically.
         </p>
         <button className="btn btn-primary block big" onClick={() => setStep("how")}>
-          Get started
+          Get started →
         </button>
         <button className="btn btn-ghost block" onClick={onSample}>
           Explore with sample data
         </button>
+        <InstallButton variant="landing" />
       </div>
     </div>
   );
