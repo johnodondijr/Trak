@@ -1,11 +1,12 @@
 import type { Transaction } from "../lib/parser/types";
-import { kes, formatTime, typeLabel } from "../lib/format";
-import { Avatar } from "./Avatar";
+import { kes, formatDate, typeLabel } from "../lib/format";
+import { IconArrowDownLeft, IconArrowUpRight, CategoryGlyph } from "./icons";
 
 /**
- * One avatar-led transaction row, shared by the ledger, the summary drill-downs
- * and the detail view. When {@link onClick} is provided the whole row is a
- * button that opens the transaction's detail.
+ * One transaction row, FastPay-style: a directional arrow in a tinted disc
+ * (money in ↙ green, money out ↗ red), the counterparty, a date/meta line, and
+ * the signed amount. Shared by the ledger, drill-downs and previews. When
+ * {@link onClick} is provided the whole row opens the transaction detail.
  */
 export function TxnRow({
   txn,
@@ -18,6 +19,7 @@ export function TxnRow({
   const isExpense = txn.direction === "expense";
   const sign = isIncome ? "+" : isExpense ? "−" : "";
   const amountClass = isIncome ? "pos" : isExpense ? "neg" : "";
+  const color = isIncome ? "var(--income)" : isExpense ? "var(--expense)" : "var(--muted)";
   const title =
     txn.counterparty ??
     (txn.type === "airtime"
@@ -28,13 +30,25 @@ export function TxnRow({
 
   const inner = (
     <>
-      <Avatar category={txn.category} />
+      <span
+        className="tx-arrow"
+        style={{ color, background: `color-mix(in srgb, ${color} 13%, var(--surface-1))` }}
+        aria-hidden
+      >
+        {isIncome ? (
+          <IconArrowDownLeft size={19} />
+        ) : isExpense ? (
+          <IconArrowUpRight size={19} />
+        ) : (
+          <CategoryGlyph category={txn.category} size={18} />
+        )}
+      </span>
       <div className="tx-main">
         <div className="tx-title">{title}</div>
         <div className="tx-meta">
           <span>{typeLabel(txn.type)}</span>
           <span>·</span>
-          <span>{formatTime(txn.date)}</span>
+          <span>{formatDate(txn.date)}</span>
           <span>·</span>
           <span style={{ textTransform: txn.institution ? "none" : "uppercase" }}>
             {txn.institution ?? txn.provider}

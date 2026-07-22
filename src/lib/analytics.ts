@@ -49,6 +49,43 @@ export interface MonthlyPoint {
 /** Transaction types that represent real spending (money leaving the wallet). */
 const SPEND_TYPES = new Set(["send", "till", "paybill", "airtime", "withdraw"]);
 
+export interface MoMStat {
+  /** Total for the current calendar month. */
+  current: number;
+  /** Total for the previous calendar month. */
+  previous: number;
+  /** Percentage change vs last month (0 when last month was 0). */
+  pct: number;
+}
+
+/**
+ * Month-over-month comparison for income and spending (spending includes
+ * charges) — powers the "vs last month +X%" figure on the Stats screen.
+ */
+export function monthOverMonth(
+  txns: Transaction[],
+  now: Date = new Date(),
+): { income: MoMStat; expense: MoMStat } {
+  const curStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
+
+  const inMonth = (from: number, to: number) =>
+    txns.filter((t) => t.date.getTime() >= from && t.date.getTime() < to);
+  const cur = totals(inMonth(curStart, now.getTime() + 1));
+  const prev = totals(inMonth(prevStart, curStart));
+
+  const stat = (current: number, previous: number): MoMStat => ({
+    current,
+    previous,
+    pct: previous > 0 ? ((current - previous) / previous) * 100 : 0,
+  });
+
+  return {
+    income: stat(cur.income, prev.income),
+    expense: stat(cur.expense + cur.charges, prev.expense + prev.charges),
+  };
+}
+
 export interface BalanceSnapshot {
   amount: number;
   date: Date;

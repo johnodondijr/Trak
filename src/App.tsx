@@ -6,6 +6,7 @@ import {
   insights,
   latestBalance,
   monthlyTrend,
+  monthOverMonth,
   summarize,
   topCounterparties,
   totals,
@@ -21,8 +22,8 @@ import { hasSample, stripSample } from "./lib/sample";
 import { kes, greeting } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
-import { MonthlyTrendChart } from "./components/MonthlyTrendChart";
 import { CategoryDonut } from "./components/CategoryDonut";
+import { StatsScreen } from "./components/StatsScreen";
 import { TrakMark } from "./components/TrakLogo";
 import { InstallButton } from "./components/InstallButton";
 import { InsightsPanel } from "./components/InsightsPanel";
@@ -93,6 +94,7 @@ export default function App() {
   );
   const categories = useMemo(() => byCategory(inRange), [inRange]);
   const trend = useMemo(() => monthlyTrend(transactions), [transactions]);
+  const mom = useMemo(() => monthOverMonth(transactions, now), [transactions, now]);
   const tips = useMemo(() => insights(transactions, now), [transactions, now]);
   const balance = useMemo(() => latestBalance(transactions), [transactions]);
   // Memoized so switching to the Trends tab doesn't recompute on every render.
@@ -202,13 +204,13 @@ export default function App() {
                     <span className="q-circle">
                       <IconActivity size={22} />
                     </span>
-                    Activity
+                    Transactions
                   </button>
                   <button onClick={() => setTab("trends")}>
                     <span className="q-circle">
                       <IconTrends size={22} />
                     </span>
-                    Trends
+                    Stats
                   </button>
                   <button onClick={() => setTab("trends")}>
                     <span className="q-circle">
@@ -286,8 +288,8 @@ export default function App() {
             {tab === "activity" && (
               <section className="section" style={{ marginTop: 4 }}>
                 <div className="section-head">
-                  <h2>Activity</h2>
-                  <span className="sub">{transactions.length} transactions</span>
+                  <h2>Transactions</h2>
+                  <span className="sub">{transactions.length} total</span>
                 </div>
                 <TransactionList
                   transactions={transactions}
@@ -301,15 +303,15 @@ export default function App() {
 
             {tab === "trends" && (
               <>
-                <section className="section" style={{ marginTop: 4 }}>
-                  <div className="section-head">
-                    <h2>Monthly trend</h2>
-                    <span className="sub">income vs spending</span>
-                  </div>
-                  <div className="card">
-                    <MonthlyTrendChart data={trend} />
-                  </div>
-                </section>
+                <div className="section-head" style={{ marginTop: 2 }}>
+                  <h2>Statistics</h2>
+                </div>
+                <StatsScreen
+                  transactions={transactions}
+                  trend={trend}
+                  mom={mom}
+                  onOpenTxn={setDetailTxn}
+                />
                 <section className="section">
                   <div className="section-head">
                     <h2>Where your money goes</h2>
@@ -370,7 +372,7 @@ export default function App() {
             <span className="tico">
               <IconActivity size={22} />
             </span>
-            Activity
+            Transactions
           </button>
           <button className="primary" onClick={() => setImporting(true)} aria-label="Import">
             <span className="tico">
@@ -381,7 +383,7 @@ export default function App() {
             <span className="tico">
               <IconTrends size={22} />
             </span>
-            Trends
+            Stats
           </button>
         </nav>
       )}
@@ -413,7 +415,7 @@ function HeroCard({
   return (
     <section className="hero">
       <div className="hero-top">
-        <span className="hero-label">{hasBalance ? "Balance" : `Net ${rangePhrase}`}</span>
+        <span className="hero-label">{hasBalance ? "Total balance" : `Net ${rangePhrase}`}</span>
         <span className="hero-chip">
           <span className="brandmark" />
           {providerLabel}
@@ -431,6 +433,10 @@ function HeroCard({
           {up ? <IconArrowUp size={13} /> : <IconArrowDown size={13} />} {kes(Math.abs(rangeNet))}
         </span>
         net {rangePhrase}
+      </div>
+      <div className="hero-foot">
+        <span className="hero-dots">•••• •••• •••• ••••</span>
+        <span className="hero-foot-brand">{providerLabel}</span>
       </div>
     </section>
   );

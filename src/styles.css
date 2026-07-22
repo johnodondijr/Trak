@@ -308,16 +308,29 @@ button {
 .hero {
   background: linear-gradient(150deg, var(--hero-1), var(--hero-2));
   color: var(--hero-ink);
-  border-radius: var(--radius-xl);
-  padding: 20px 20px 22px;
-  box-shadow: var(--shadow-card);
+  border-radius: 28px;
+  padding: 24px 24px 22px;
+  box-shadow: 0 12px 30px rgba(245, 210, 17, 0.28);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -60px;
+  top: -70px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
 }
 .hero-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 .hero-label {
   font-size: 13px;
@@ -344,10 +357,10 @@ button {
   opacity: 0.9;
 }
 .hero-amount {
-  font-size: 38px;
+  font-size: 46px;
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.05;
+  line-height: 1.02;
   display: flex;
   align-items: center;
 }
@@ -387,6 +400,24 @@ button {
   background: rgba(28, 31, 16, 0.1);
   border-radius: 999px;
   padding: 3px 9px;
+}
+.hero-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+}
+.hero-dots {
+  font-size: 16px;
+  letter-spacing: 2px;
+  opacity: 0.55;
+  line-height: 1;
+}
+.hero-foot-brand {
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 /* ---- Quick actions ---- */
@@ -611,12 +642,17 @@ button {
   align-items: center;
   padding: 11px 4px;
 }
-.avatar {
+.avatar,
+.tx-arrow {
   border-radius: 50%;
   display: grid;
   place-items: center;
   flex: none;
   line-height: 1;
+}
+.tx-arrow {
+  width: 44px;
+  height: 44px;
 }
 
 /* chevron on expandable summary rows */
@@ -659,6 +695,113 @@ button {
   font-size: 11px;
   color: var(--muted);
   font-weight: 500;
+}
+
+/* ---- Statistics screen ---- */
+.stats-head {
+  margin: 2px 2px 16px;
+}
+.stats-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.stats-total-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.stats-total {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.stats-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.stats-delta-sub {
+  color: var(--muted);
+  font-weight: 500;
+  margin-left: 2px;
+}
+.stats-toggle {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+.stats-toggle button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 11px 4px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.stats-toggle button[aria-pressed="true"] {
+  background: var(--ink-btn);
+  color: var(--surface-1);
+}
+.analytics-card {
+  background: #17171b;
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 18px 16px 10px;
+  box-shadow: var(--shadow-card);
+}
+.analytics-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.analytics-card-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.analytics-card-sub {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+.analytics-card-total {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.analytics {
+  position: relative;
+}
+.analytics-tip {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #16161a;
+  border-radius: 10px;
+  padding: 6px 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.analytics-tip-label {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.analytics-tip-val {
+  font-size: 13px;
+  font-weight: 800;
 }
 
 /* ---- Insights ---- */
@@ -845,13 +988,13 @@ button {
 .tabbar button.primary {
   background: var(--yellow);
   color: #16161a;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
   justify-content: center;
   gap: 0;
-  margin-top: -22px;
-  box-shadow: 0 6px 18px rgba(245, 210, 17, 0.5);
+  margin-top: -24px;
+  box-shadow: 0 8px 18px rgba(245, 210, 17, 0.5);
 }
 .tabbar button.primary .tico {
   font-size: 22px;
