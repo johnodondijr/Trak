@@ -129,6 +129,11 @@ bottom nav with **Home · Activity · Trends** plus a center Import action. It
 reads full-screen on a phone and as a centered device-style column on desktop,
 with light and dark themes.
 
+The UI uses a hand-built **line-icon set** (`src/components/icons.tsx`) rather
+than emoji — category glyphs, nav, actions and status all share one 24px/2px
+stroke style — plus soft icon chips, an animated fade between tabs, and a
+balance-hide toggle on the hero.
+
 First-run shows a **landing screen** (floating-card hero + "Get started") that
 leads into a short onboarding explainer — why a one-time SMS backup is needed
 today, the three steps to do it, and a "coming soon: automatic SMS reading"

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { IconUpload, IconSpinner } from "./icons";
 import { importContent, type ImportResult, type ImportSource } from "../lib/importers/index";
 import type { Transaction } from "../lib/parser/types";
 import { SAMPLE_MESSAGES } from "../data/sampleMessages";
@@ -104,8 +105,8 @@ export function ImportModal({
             hidden
             onChange={(e) => handleFiles(e.target.files)}
           />
-          <div className="dz-icon" aria-hidden>
-            {busy ? "⏳" : "📄"}
+          <div className={`dz-icon ${busy ? "spin" : ""}`} aria-hidden>
+            {busy ? <IconSpinner size={26} /> : <IconUpload size={26} />}
           </div>
           <div className="dz-main">
             {busy ? "Reading file…" : "Click to choose a file, or drag it here"}

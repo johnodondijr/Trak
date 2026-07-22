@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CounterpartyTotal } from "../lib/analytics";
 import type { Transaction } from "../lib/parser/types";
 import { kes } from "../lib/format";
+import { IconChevron } from "./icons";
 import { TxnRow } from "./TxnRow";
 
 const PREVIEW = 5;
@@ -53,7 +54,11 @@ export function TopRecipients({
               </div>
               <div className="barvalue">
                 {kes(row.total)}
-                {interactive && <span className={`chev ${isOpen ? "up" : ""}`}>⌄</span>}
+                {interactive && (
+                  <span className={`chev ${isOpen ? "up" : ""}`}>
+                    <IconChevron size={16} />
+                  </span>
+                )}
               </div>
               <div className="bartrack">
                 <div

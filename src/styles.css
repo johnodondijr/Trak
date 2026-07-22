@@ -169,6 +169,35 @@ button {
   padding: 18px 16px 108px;
 }
 
+/* Smooth tab switch: the keyed .tab-view remounts and fades up. */
+.tab-view {
+  animation: tabIn 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes tabIn {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-view {
+    animation: none;
+  }
+}
+.dz-icon.spin {
+  animation: spin 0.8s linear infinite;
+  display: inline-flex;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---- Header ---- */
 .app-header {
   display: flex;
@@ -302,13 +331,32 @@ button {
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
+  display: flex;
+  align-items: center;
 }
 .hero-amount .cur {
   font-size: 17px;
   font-weight: 700;
   opacity: 0.6;
   margin-right: 6px;
-  vertical-align: 6px;
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.hero-eye {
+  border: none;
+  background: rgba(28, 31, 16, 0.1);
+  color: var(--hero-ink);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  margin-left: 12px;
+  opacity: 0.7;
+  transition: opacity 0.12s ease;
+}
+.hero-eye:hover {
+  opacity: 1;
 }
 .hero-delta {
   margin-top: 8px;
@@ -428,21 +476,36 @@ button {
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 12px;
+  padding: 13px 12px;
   box-shadow: var(--shadow-card);
+}
+.mini-chip {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 9px;
 }
 .mini .lbl {
   font-size: 11.5px;
   color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 .mini .val {
   font-size: 15.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+/* icon chip inside a category bar label */
+.cat-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
 }
 .dot {
   width: 8px;
@@ -487,6 +550,9 @@ button {
   font-size: 13.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 .barrow .bartrack {
   grid-column: 1 / -1;
@@ -529,6 +595,18 @@ button {
   place-items: center;
   flex: none;
   line-height: 1;
+}
+
+/* chevron on expandable summary rows */
+.chev {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  margin-left: 5px;
+  transition: transform 0.18s ease;
+}
+.chev.up {
+  transform: rotate(180deg);
 }
 .tx-main {
   min-width: 0;
@@ -580,7 +658,9 @@ button {
 }
 .insight .ico {
   flex: none;
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1px;
 }
 .insight.good {
   border-left: 3px solid var(--status-good);
@@ -665,6 +745,8 @@ button {
 }
 .tabbar button .tico {
   font-size: 19px;
+  display: inline-grid;
+  place-items: center;
 }
 .tabbar button[aria-current="true"] {
   color: var(--text-primary);
@@ -1103,6 +1185,12 @@ button {
   font-size: 12.5px;
   font-weight: 700;
   box-shadow: var(--shadow-card);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.c-row-ico svg {
+  display: block;
 }
 .c-pill-1 {
   bottom: 40px;

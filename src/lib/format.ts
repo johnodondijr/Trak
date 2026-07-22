@@ -137,27 +137,6 @@ export function categoryColor(c: Category): string {
   return CATEGORY_COLORS[c] ?? "var(--muted)";
 }
 
-const CATEGORY_ICONS: Record<Category, string> = {
-  food: "🍽️",
-  transport: "🚗",
-  shopping: "🛍️",
-  bills: "🧾",
-  airtime: "📱",
-  entertainment: "🎬",
-  business: "💼",
-  transfers: "↗️",
-  withdrawal: "🏧",
-  deposit: "🏦",
-  charges: "💰",
-  income: "⬇️",
-  fuliza: "💳",
-  other: "•",
-};
-
-export function categoryIcon(c: Category): string {
-  return CATEGORY_ICONS[c] ?? "•";
-}
-
 const TYPE_LABELS: Record<TransactionType, string> = {
   send: "Sent",
   receive: "Received",

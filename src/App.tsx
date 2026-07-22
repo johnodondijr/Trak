@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Transaction, Category } from "./lib/parser/types";
 import { parseMessages } from "./lib/parser/index";
 import {
@@ -27,6 +27,20 @@ import { TransactionList } from "./components/TransactionList";
 import { TransactionDetail } from "./components/TransactionDetail";
 import { EmptyLanding } from "./components/EmptyLanding";
 import { ImportModal } from "./components/ImportModal";
+import {
+  IconHome,
+  IconActivity,
+  IconTrends,
+  IconPlus,
+  IconSun,
+  IconMoon,
+  IconEye,
+  IconEyeOff,
+  IconArrowUp,
+  IconArrowDown,
+  IconArrowDownLeft,
+  IconArrowUpRight,
+} from "./components/icons";
 
 type Range = "today" | "week" | "month" | "all";
 const RANGE_LABELS: Record<Range, string> = {
@@ -58,6 +72,7 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem("trak.theme") as Theme) || "light",
   );
+  const [hideBalance, setHideBalance] = useState(false);
 
   useEffect(() => saveTransactions(transactions), [transactions]);
   useEffect(() => {
@@ -76,6 +91,9 @@ export default function App() {
   const trend = useMemo(() => monthlyTrend(transactions), [transactions]);
   const tips = useMemo(() => insights(transactions, now), [transactions, now]);
   const balance = useMemo(() => latestBalance(transactions), [transactions]);
+  // Memoized so switching to the Trends tab doesn't recompute on every render.
+  const allCategories = useMemo(() => byCategory(transactions), [transactions]);
+  const allRecipients = useMemo(() => topCounterparties(transactions, 6), [transactions]);
 
   function revealImported(merged: Transaction[]) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -130,10 +148,10 @@ export default function App() {
               onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
               aria-label="Toggle dark mode"
             >
-              {theme === "dark" ? "☀️" : "🌙"}
+              {theme === "dark" ? <IconSun size={19} /> : <IconMoon size={19} />}
             </button>
             <button className="icon-btn" onClick={() => setImporting(true)} aria-label="Import">
-              ＋
+              <IconPlus size={19} />
             </button>
           </div>
         </header>
@@ -155,26 +173,34 @@ export default function App() {
         {!hasData ? (
           <EmptyLanding onImport={() => setImporting(true)} onSample={loadSample} />
         ) : (
-          <>
+          <div className="tab-view" key={tab}>
             {tab === "overview" && (
               <>
                 <HeroCard
                   balance={balance}
                   rangeNet={rangeTotals.net}
                   rangePhrase={RANGE_PHRASE[range]}
+                  hidden={hideBalance}
+                  onToggleHidden={() => setHideBalance((h) => !h)}
                 />
 
                 <div className="quick">
                   <button onClick={() => setImporting(true)}>
-                    <span className="q-circle">＋</span>
+                    <span className="q-circle">
+                      <IconPlus size={22} />
+                    </span>
                     Import
                   </button>
                   <button onClick={() => setTab("activity")}>
-                    <span className="q-circle">📥</span>
+                    <span className="q-circle">
+                      <IconActivity size={22} />
+                    </span>
                     Activity
                   </button>
                   <button onClick={() => setTab("trends")}>
-                    <span className="q-circle">📈</span>
+                    <span className="q-circle">
+                      <IconTrends size={22} />
+                    </span>
                     Trends
                   </button>
                 </div>
@@ -188,9 +214,26 @@ export default function App() {
                     ))}
                   </div>
                   <div className="mini-stats">
-                    <Mini label="In" dot="var(--income)" value={kes(rangeTotals.income)} cls="pos" />
-                    <Mini label="Out" dot="var(--expense)" value={kes(spent)} cls="neg" />
-                    <Mini label="Charges" dot="var(--muted)" value={kes(rangeTotals.charges)} />
+                    <Mini
+                      label="Money in"
+                      value={kes(rangeTotals.income)}
+                      cls="pos"
+                      color="var(--income)"
+                      icon={<IconArrowDownLeft size={17} />}
+                    />
+                    <Mini
+                      label="Money out"
+                      value={kes(spent)}
+                      cls="neg"
+                      color="var(--expense)"
+                      icon={<IconArrowUpRight size={17} />}
+                    />
+                    <Mini
+                      label="Charges"
+                      value={kes(rangeTotals.charges)}
+                      color="var(--muted)"
+                      icon={<IconArrowUp size={15} />}
+                    />
                   </div>
                 </div>
 
@@ -261,7 +304,7 @@ export default function App() {
                   </div>
                   <div className="card">
                     <TopRecipients
-                      data={topCounterparties(transactions, 6)}
+                      data={allRecipients}
                       transactions={transactions}
                       onOpenTxn={setDetailTxn}
                       onSeeAll={(name) => seeAllInActivity({ query: name })}
@@ -274,7 +317,7 @@ export default function App() {
                   </div>
                   <div className="card">
                     <CategoryBreakdown
-                      data={byCategory(transactions)}
+                      data={allCategories}
                       transactions={transactions}
                       onOpenTxn={setDetailTxn}
                       onSeeAll={(c) => seeAllInActivity({ category: c })}
@@ -289,32 +332,40 @@ export default function App() {
                 </div>
               </>
             )}
-          </>
+          </div>
         )}
       </div>
 
       {hasData && (
         <nav className="tabbar">
           <button aria-current={tab === "overview"} onClick={() => setTab("overview")}>
-            <span className="tico">🏠</span>
+            <span className="tico">
+              <IconHome size={22} />
+            </span>
             Home
           </button>
           <button aria-current={tab === "activity"} onClick={() => setTab("activity")}>
-            <span className="tico">📥</span>
+            <span className="tico">
+              <IconActivity size={22} />
+            </span>
             Activity
           </button>
           <button className="primary" onClick={() => setImporting(true)} aria-label="Import">
-            <span className="tico">＋</span>
+            <span className="tico">
+              <IconPlus size={24} />
+            </span>
           </button>
           <button aria-current={tab === "trends"} onClick={() => setTab("trends")}>
-            <span className="tico">📈</span>
+            <span className="tico">
+              <IconTrends size={22} />
+            </span>
             Trends
           </button>
           <button
             onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
             aria-label="Toggle theme"
           >
-            <span className="tico">{theme === "dark" ? "☀️" : "🌙"}</span>
+            <span className="tico">{theme === "dark" ? <IconSun size={22} /> : <IconMoon size={22} />}</span>
             Theme
           </button>
         </nav>
@@ -330,10 +381,14 @@ function HeroCard({
   balance,
   rangeNet,
   rangePhrase,
+  hidden,
+  onToggleHidden,
 }: {
   balance: ReturnType<typeof latestBalance>;
   rangeNet: number;
   rangePhrase: string;
+  hidden: boolean;
+  onToggleHidden: () => void;
 }) {
   const hasBalance = balance != null;
   const bigValue = hasBalance ? balance!.amount : Math.abs(rangeNet);
@@ -351,11 +406,14 @@ function HeroCard({
       </div>
       <div className="hero-amount">
         <span className="cur">KES</span>
-        {Math.round(bigValue).toLocaleString("en-KE")}
+        {hidden ? "••••••" : Math.round(bigValue).toLocaleString("en-KE")}
+        <button className="hero-eye" onClick={onToggleHidden} aria-label={hidden ? "Show balance" : "Hide balance"}>
+          {hidden ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+        </button>
       </div>
       <div className="hero-delta">
         <span className="pill">
-          {up ? "▲" : "▼"} {kes(Math.abs(rangeNet))}
+          {up ? <IconArrowUp size={13} /> : <IconArrowDown size={13} />} {kes(Math.abs(rangeNet))}
         </span>
         net {rangePhrase}
       </div>
@@ -366,20 +424,25 @@ function HeroCard({
 function Mini({
   label,
   value,
-  dot,
+  color,
+  icon,
   cls,
 }: {
   label: string;
   value: string;
-  dot: string;
+  color: string;
+  icon: ReactNode;
   cls?: string;
 }) {
   return (
     <div className="mini">
-      <div className="lbl">
-        <i className="dot" style={{ background: dot }} />
-        {label}
-      </div>
+      <span
+        className="mini-chip"
+        style={{ color, background: `color-mix(in srgb, ${color} 15%, var(--surface-1))` }}
+      >
+        {icon}
+      </span>
+      <div className="lbl">{label}</div>
       <div className={`val ${cls ?? ""}`}>{value}</div>
     </div>
   );

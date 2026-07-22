@@ -2,13 +2,13 @@ import { useState } from "react";
 import type { Transaction } from "../lib/parser/types";
 import {
   categoryColor,
-  categoryIcon,
   categoryLabel,
   formatDateTime,
   kes,
   kesPrecise,
   typeLabel,
 } from "../lib/format";
+import { CategoryGlyph } from "./icons";
 
 /**
  * Full detail for a single transaction, shown as a bottom sheet. Surfaces every
@@ -37,10 +37,13 @@ export function TransactionDetail({
         <div className="detail-head">
           <div
             className="detail-avatar"
-            style={{ background: `color-mix(in srgb, ${categoryColor(txn.category)} 18%, var(--surface-1))` }}
+            style={{
+              color: categoryColor(txn.category),
+              background: `color-mix(in srgb, ${categoryColor(txn.category)} 16%, var(--surface-1))`,
+            }}
             aria-hidden
           >
-            {categoryIcon(txn.category)}
+            <CategoryGlyph category={txn.category} size={26} />
           </div>
           <div className={`detail-amount ${amountClass}`}>
             {txn.direction === "neutral" ? "" : sign}

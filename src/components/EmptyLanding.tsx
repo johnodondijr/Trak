@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IconArrowDownLeft, IconTrends, CategoryGlyph } from "./icons";
 
 /**
  * First-run landing + onboarding. A bold hero (floating card collage, headline,
@@ -84,14 +85,20 @@ export function EmptyLanding({
           <div className="c-bal">KES 42,500</div>
         </div>
         <div className="c-card c-income">
-          <div className="c-row-ico">⬇️</div>
+          <div className="c-row-ico">
+            <IconArrowDownLeft size={18} />
+          </div>
           <div>
             <div className="c-row-title">Received</div>
             <div className="c-row-amt pos">+KES 8,000</div>
           </div>
         </div>
-        <div className="c-pill c-pill-1">🛍️ Shopping</div>
-        <div className="c-pill c-pill-2">📈 Trends</div>
+        <div className="c-pill c-pill-1">
+          <CategoryGlyph category="shopping" size={15} /> Shopping
+        </div>
+        <div className="c-pill c-pill-2">
+          <IconTrends size={15} /> Trends
+        </div>
         <div className="c-pill c-pill-3">Airtel Money</div>
       </div>
 

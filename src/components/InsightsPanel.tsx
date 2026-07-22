@@ -1,15 +1,21 @@
 import type { Insight } from "../lib/analytics";
+import { IconCheck, IconAlert, IconBulb } from "./icons";
 
-const ICONS: Record<Insight["tone"], string> = {
-  good: "✅",
-  warn: "⚠️",
-  info: "💡",
+const ICON: Record<Insight["tone"], () => JSX.Element> = {
+  good: () => <IconCheck size={17} />,
+  warn: () => <IconAlert size={17} />,
+  info: () => <IconBulb size={17} />,
+};
+const TONE_COLOR: Record<Insight["tone"], string> = {
+  good: "var(--status-good)",
+  warn: "var(--status-warning)",
+  info: "var(--series-1)",
 };
 
 /**
- * Plain-language takeaways derived from the transactions — biggest category,
- * month-on-month change, charges, this-month flow. Status tone drives the icon
- * and left border, so the meaning is carried by icon + text, not color alone.
+ * Plain-language takeaways derived from the transactions. Tone drives the icon,
+ * left border and icon color, so meaning is carried by icon + text — not color
+ * alone.
  */
 export function InsightsPanel({ insights }: { insights: Insight[] }) {
   if (insights.length === 0) {
@@ -17,14 +23,17 @@ export function InsightsPanel({ insights }: { insights: Insight[] }) {
   }
   return (
     <div className="insights">
-      {insights.map((ins, i) => (
-        <div className={`insight ${ins.tone}`} key={i}>
-          <span className="ico" aria-hidden>
-            {ICONS[ins.tone]}
-          </span>
-          <span>{ins.text}</span>
-        </div>
-      ))}
+      {insights.map((ins, i) => {
+        const Glyph = ICON[ins.tone];
+        return (
+          <div className={`insight ${ins.tone}`} key={i}>
+            <span className="ico" style={{ color: TONE_COLOR[ins.tone] }}>
+              <Glyph />
+            </span>
+            <span>{ins.text}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }

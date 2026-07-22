@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { CategoryTotal } from "../lib/analytics";
 import type { Transaction, Category } from "../lib/parser/types";
-import { categoryColor, categoryIcon, categoryLabel, kes } from "../lib/format";
+import { categoryColor, categoryLabel, kes } from "../lib/format";
+import { CategoryGlyph, IconChevron } from "./icons";
 import { TxnRow } from "./TxnRow";
 
 const PREVIEW = 5;
@@ -48,12 +49,24 @@ export function CategoryBreakdown({
               aria-expanded={isOpen}
             >
               <div className="barlabel">
-                <span aria-hidden>{categoryIcon(row.category)}</span>
+                <span
+                  className="cat-chip"
+                  style={{
+                    color: categoryColor(row.category),
+                    background: `color-mix(in srgb, ${categoryColor(row.category)} 14%, var(--surface-1))`,
+                  }}
+                >
+                  <CategoryGlyph category={row.category} size={16} />
+                </span>
                 <span className="name">{categoryLabel(row.category)}</span>
               </div>
               <div className="barvalue">
                 {kes(row.total)}
-                {interactive && <span className={`chev ${isOpen ? "up" : ""}`}>⌄</span>}
+                {interactive && (
+                  <span className={`chev ${isOpen ? "up" : ""}`}>
+                    <IconChevron size={16} />
+                  </span>
+                )}
               </div>
               <div className="bartrack">
                 <div
