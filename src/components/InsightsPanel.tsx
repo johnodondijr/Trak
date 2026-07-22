@@ -25,12 +25,16 @@ export function InsightsPanel({ insights }: { insights: Insight[] }) {
     <div className="insights">
       {insights.map((ins, i) => {
         const Glyph = ICON[ins.tone];
+        const color = TONE_COLOR[ins.tone];
         return (
-          <div className={`insight ${ins.tone}`} key={i}>
-            <span className="ico" style={{ color: TONE_COLOR[ins.tone] }}>
+          <div className="insight" key={i}>
+            <span
+              className="insight-chip"
+              style={{ color, background: `color-mix(in srgb, ${color} 15%, var(--surface-1))` }}
+            >
               <Glyph />
             </span>
-            <span>{ins.text}</span>
+            <span className="insight-text">{ins.text}</span>
           </div>
         );
       })}

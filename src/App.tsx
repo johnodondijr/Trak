@@ -133,7 +133,10 @@ export default function App() {
 
   return (
     <div className="device">
-      <div className="screen">
+      {!hasData ? (
+        <EmptyLanding onImport={() => setImporting(true)} onSample={loadSample} />
+      ) : (
+        <div className="screen">
         <header className="app-header">
           <div className="hi">
             <div className="hi-logo">T</div>
@@ -170,10 +173,7 @@ export default function App() {
           </div>
         )}
 
-        {!hasData ? (
-          <EmptyLanding onImport={() => setImporting(true)} onSample={loadSample} />
-        ) : (
-          <div className="tab-view" key={tab}>
+        <div className="tab-view" key={tab}>
             {tab === "overview" && (
               <>
                 <HeroCard
@@ -333,8 +333,8 @@ export default function App() {
               </>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {hasData && (
         <nav className="tabbar">
