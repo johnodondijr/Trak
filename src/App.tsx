@@ -73,6 +73,7 @@ const RANGE_PHRASE: Record<Range, string> = {
 type Tab = "overview" | "activity" | "trends" | "more";
 type FocusPage = "insights" | "categories" | "recipients" | "charges";
 type Theme = "light" | "dark";
+const LAST_READ_AT_KEY = "trak.lastReadAt";
 
 export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => loadTransactions());
@@ -89,6 +90,12 @@ export default function App() {
     () => (localStorage.getItem("trak.theme") as Theme) || "light",
   );
   const [hideBalance, setHideBalance] = useState(false);
+  const [lastReadAt, setLastReadAt] = useState<Date | null>(() => {
+    const raw = localStorage.getItem(LAST_READ_AT_KEY);
+    if (!raw) return null;
+    const date = new Date(raw);
+    return isNaN(date.getTime()) ? null : date;
+  });
 
   useEffect(() => saveTransactions(transactions), [transactions]);
   useEffect(() => {
@@ -111,6 +118,7 @@ export default function App() {
   // Memoized so switching to the Trends tab doesn't recompute on every render.
   const allCategories = useMemo(() => byCategory(transactions), [transactions]);
   const allRecipients = useMemo(() => topCounterparties(transactions, 6), [transactions]);
+  const readAsOf = useMemo(() => lastReadAt ?? transactions[0]?.date ?? null, [lastReadAt, transactions]);
   const displayName = useMemo(() => loggedInName(), []);
   const headerTitle =
     tab === "more"
@@ -130,13 +138,19 @@ export default function App() {
   function handleImport(incoming: Transaction[]) {
     // Importing real data removes the demo so the two never mix.
     const merged = mergeTransactions(stripSample(transactions), incoming);
+    const readAt = new Date();
     setTransactions(merged);
+    setLastReadAt(readAt);
+    localStorage.setItem(LAST_READ_AT_KEY, readAt.toISOString());
     revealImported(merged);
   }
   function loadSample() {
     const { transactions: sample } = parseMessages(SAMPLE_MESSAGES);
     const merged = mergeTransactions(transactions, sample);
+    const readAt = new Date();
     setTransactions(merged);
+    setLastReadAt(readAt);
+    localStorage.setItem(LAST_READ_AT_KEY, readAt.toISOString());
     revealImported(merged);
   }
   function clearSample() {
@@ -156,6 +170,8 @@ export default function App() {
   function handleClear() {
     if (confirm("Remove all imported transactions? This can't be undone.")) {
       clearTransactions();
+      localStorage.removeItem(LAST_READ_AT_KEY);
+      setLastReadAt(null);
       setTransactions([]);
       setTab("overview");
     }
@@ -222,6 +238,7 @@ export default function App() {
                   balance={balance}
                   rangeNet={rangeTotals.net}
                   rangePhrase={RANGE_PHRASE[range]}
+                  readAsOf={readAsOf}
                   hidden={hideBalance}
                   onToggleHidden={() => setHideBalance((h) => !h)}
                 />
@@ -430,12 +447,14 @@ function HeroCard({
   balance,
   rangeNet,
   rangePhrase,
+  readAsOf,
   hidden,
   onToggleHidden,
 }: {
   balance: ReturnType<typeof latestBalance>;
   rangeNet: number;
   rangePhrase: string;
+  readAsOf: Date | null;
   hidden: boolean;
   onToggleHidden: () => void;
 }) {
@@ -463,7 +482,7 @@ function HeroCard({
           </button>
         </div>
         <div className="hero-foot">
-          <span className="hero-dots">•••• •••• •••• ••••</span>
+          <span className="hero-asof">{readAsOf ? `as of ${formatReadAsOf(readAsOf)}` : "ready to read messages"}</span>
           <span className="hero-delta-inline">
             {up ? <IconArrowUp size={12} /> : <IconArrowDown size={12} />}
             {kes(Math.abs(rangeNet))} net {rangePhrase}
@@ -757,6 +776,24 @@ function loggedInName(): string {
     if (value) return value.split(/\s+/)[0];
   }
   return "there";
+}
+
+function formatReadAsOf(date: Date): string {
+  const day = date.getDate();
+  const suffix =
+    day % 10 === 1 && day !== 11
+      ? "st"
+      : day % 10 === 2 && day !== 12
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+          ? "rd"
+          : "th";
+  const month = date.toLocaleString("en-KE", { month: "long" });
+  const time = date
+    .toLocaleString("en-KE", { hour: "numeric", minute: "2-digit", hour12: true })
+    .toLowerCase()
+    .replace(/\s/g, "");
+  return `${day}${suffix} ${month} ${time}`;
 }
 
 function filterByRange(txns: Transaction[], range: Range, now: Date): Transaction[] {
