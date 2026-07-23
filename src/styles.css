@@ -180,7 +180,7 @@ button {
 }
 .screen {
   position: relative;
-  padding: 18px 16px 108px;
+  padding: 18px 16px calc(126px + env(safe-area-inset-bottom, 0px));
 }
 .screen > * {
   position: relative;
@@ -1252,18 +1252,18 @@ button {
 /* ---- Bottom tab bar ---- */
 .tabbar {
   position: fixed;
-  bottom: 14px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: min(438px, calc(100vw - 28px));
+  width: min(480px, 100vw);
   background: #17171b;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 22px;
+  border-radius: 22px 22px 0 0;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 9px 12px;
+  padding: 9px 12px calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 40;
 }
 .tabbar button {
