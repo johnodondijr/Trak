@@ -73,6 +73,31 @@ export const IconSun = ({ size }: IconProps) => (
     <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
   </Svg>
 );
+export const IconPie = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <path d="M12 3a9 9 0 1 0 9 9" />
+    <path d="M12 3v9h9a9 9 0 0 0-9-9Z" />
+  </Svg>
+);
+export const IconUsers = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <circle cx="9" cy="8" r="3.2" />
+    <path d="M3 20a6 6 0 0 1 12 0" />
+    <path d="M16 5.4a3.2 3.2 0 0 1 0 5.2M21.5 20a6 6 0 0 0-4-5.6" />
+  </Svg>
+);
+export const IconPercent = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <path d="M19 5 5 19" />
+    <circle cx="7.5" cy="7.5" r="2.3" />
+    <circle cx="16.5" cy="16.5" r="2.3" />
+  </Svg>
+);
+export const IconArrowLeft = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <path d="M19 12H5M12 19l-7-7 7-7" />
+  </Svg>
+);
 export const IconTransfer = ({ size }: IconProps) => (
   <Svg size={size}>
     <path d="M7 20V5M7 5 4 8M7 5l3 3" />

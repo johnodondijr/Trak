@@ -19,7 +19,7 @@ import {
 } from "./lib/storage";
 import { SAMPLE_MESSAGES } from "./data/sampleMessages";
 import { hasSample, stripSample } from "./lib/sample";
-import { kes, greeting } from "./lib/format";
+import { kes, greeting, typeLabel, formatDate } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
 import { CategoryDonut } from "./components/CategoryDonut";
@@ -33,7 +33,6 @@ import { EmptyLanding } from "./components/EmptyLanding";
 import { ImportModal } from "./components/ImportModal";
 import {
   IconHome,
-  IconActivity,
   IconTrends,
   IconPlus,
   IconSun,
@@ -51,6 +50,10 @@ import {
   IconTrash,
   IconChevronRight,
   IconTransfer,
+  IconPie,
+  IconUsers,
+  IconPercent,
+  IconArrowLeft,
 } from "./components/icons";
 
 type Range = "today" | "week" | "month" | "all";
@@ -68,12 +71,14 @@ const RANGE_PHRASE: Record<Range, string> = {
 };
 
 type Tab = "overview" | "activity" | "trends" | "more";
+type FocusPage = "insights" | "categories" | "recipients" | "charges";
 type Theme = "light" | "dark";
 
 export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => loadTransactions());
   const [range, setRange] = useState<Range>("month");
   const [tab, setTab] = useState<Tab>("overview");
+  const [focus, setFocus] = useState<FocusPage | null>(null);
   const [importing, setImporting] = useState(false);
   const [detailTxn, setDetailTxn] = useState<Transaction | null>(null);
   const [activityPreset, setActivityPreset] = useState<{
@@ -126,9 +131,15 @@ export default function App() {
   function clearSample() {
     setTransactions((prev) => stripSample(prev));
   }
+  /** Switch to a nav tab, leaving any focus sub-page. */
+  function openTab(t: Tab) {
+    setFocus(null);
+    setTab(t);
+  }
   /** Jump to the Activity tab pre-filtered from a summary drill-down. */
   function seeAllInActivity(preset: { query?: string; category?: Category | "all" }) {
     setActivityPreset({ query: preset.query ?? "", category: preset.category ?? "all" });
+    setFocus(null);
     setTab("activity");
   }
   function handleClear() {
@@ -161,7 +172,7 @@ export default function App() {
           </div>
           <div className="header-actions">
             <InstallButton variant="header" />
-            <button className="icon-btn" onClick={() => setTab("more")} aria-label="Account">
+            <button className="icon-btn" onClick={() => openTab("more")} aria-label="Account">
               <IconBell size={19} />
             </button>
           </div>
@@ -181,8 +192,20 @@ export default function App() {
           </div>
         )}
 
-        <div className="tab-view" key={tab}>
-            {tab === "overview" && (
+        <div className="tab-view" key={focus ?? tab}>
+            {focus && (
+              <FocusView
+                focus={focus}
+                transactions={transactions}
+                allCategories={allCategories}
+                tips={tips}
+                onBack={() => setFocus(null)}
+                onOpenTxn={setDetailTxn}
+                onSeeAllCategory={(c) => seeAllInActivity({ category: c })}
+                onSeeAllRecipient={(name) => seeAllInActivity({ query: name })}
+              />
+            )}
+            {!focus && tab === "overview" && (
               <>
                 <HeroCard
                   balance={balance}
@@ -197,29 +220,29 @@ export default function App() {
                 </button>
 
                 <div className="quick">
-                  <button onClick={() => setTab("activity")}>
+                  <button onClick={() => setFocus("categories")}>
                     <span className="q-circle">
-                      <IconActivity size={21} />
+                      <IconPie size={21} />
                     </span>
-                    Transactions
+                    Categories
                   </button>
-                  <button onClick={() => setTab("trends")}>
+                  <button onClick={() => setFocus("recipients")}>
                     <span className="q-circle">
-                      <IconTrends size={21} />
+                      <IconUsers size={21} />
                     </span>
-                    Stats
+                    Recipients
                   </button>
-                  <button onClick={() => setTab("trends")}>
+                  <button onClick={() => setFocus("charges")}>
+                    <span className="q-circle">
+                      <IconPercent size={21} />
+                    </span>
+                    Charges
+                  </button>
+                  <button onClick={() => setFocus("insights")}>
                     <span className="q-circle">
                       <IconBulb size={21} />
                     </span>
                     Insights
-                  </button>
-                  <button onClick={() => setTab("more")}>
-                    <span className="q-circle">
-                      <IconUser size={21} />
-                    </span>
-                    Account
                   </button>
                 </div>
 
@@ -273,8 +296,8 @@ export default function App() {
                 <section className="section">
                   <div className="section-head">
                     <h2>Insights</h2>
-                    <button className="link" onClick={() => setTab("trends")}>
-                      See trends
+                    <button className="link" onClick={() => setFocus("insights")}>
+                      See all
                     </button>
                   </div>
                   <InsightsPanel insights={tips} />
@@ -370,13 +393,13 @@ export default function App() {
 
       {hasData && (
         <nav className="tabbar">
-          <button aria-current={tab === "overview"} onClick={() => setTab("overview")}>
+          <button aria-current={!focus && tab === "overview"} onClick={() => openTab("overview")}>
             <span className="tico">
               <IconHome size={22} />
             </span>
             Home
           </button>
-          <button aria-current={tab === "activity"} onClick={() => setTab("activity")}>
+          <button aria-current={!focus && tab === "activity"} onClick={() => openTab("activity")}>
             <span className="tico">
               <IconTransfer size={22} />
             </span>
@@ -387,13 +410,13 @@ export default function App() {
               <IconPlus size={26} />
             </span>
           </button>
-          <button aria-current={tab === "trends"} onClick={() => setTab("trends")}>
+          <button aria-current={!focus && tab === "trends"} onClick={() => openTab("trends")}>
             <span className="tico">
               <IconTrends size={22} />
             </span>
             Stats
           </button>
-          <button aria-current={tab === "more"} onClick={() => setTab("more")}>
+          <button aria-current={!focus && tab === "more"} onClick={() => openTab("more")}>
             <span className="tico">
               <IconUser size={22} />
             </span>
@@ -456,6 +479,148 @@ function HeroCard({
         <span className="active" />
         <span />
         <span />
+      </div>
+    </>
+  );
+}
+
+const FOCUS_TITLES: Record<FocusPage, string> = {
+  insights: "Insights",
+  categories: "Spending by category",
+  recipients: "Top recipients",
+  charges: "Transaction charges",
+};
+
+function FocusView({
+  focus,
+  transactions,
+  allCategories,
+  tips,
+  onBack,
+  onOpenTxn,
+  onSeeAllCategory,
+  onSeeAllRecipient,
+}: {
+  focus: FocusPage;
+  transactions: Transaction[];
+  allCategories: ReturnType<typeof byCategory>;
+  tips: ReturnType<typeof insights>;
+  onBack: () => void;
+  onOpenTxn: (t: Transaction) => void;
+  onSeeAllCategory: (c: Category) => void;
+  onSeeAllRecipient: (name: string) => void;
+}) {
+  return (
+    <div className="focus">
+      <button className="focus-back" onClick={onBack}>
+        <IconArrowLeft size={18} /> Back
+      </button>
+      <h2 className="focus-title">{FOCUS_TITLES[focus]}</h2>
+
+      {focus === "insights" && (
+        <>
+          <p className="focus-lead">
+            What Trak notices about your spending — updated as you import more messages.
+          </p>
+          <InsightsPanel insights={tips} />
+        </>
+      )}
+
+      {focus === "categories" && (
+        <>
+          <div className="card">
+            <CategoryDonut data={allCategories} />
+          </div>
+          <div className="section-head" style={{ marginTop: 18 }}>
+            <h2>All categories</h2>
+          </div>
+          <div className="card">
+            <CategoryBreakdown
+              data={allCategories}
+              transactions={transactions}
+              onOpenTxn={onOpenTxn}
+              onSeeAll={onSeeAllCategory}
+            />
+          </div>
+        </>
+      )}
+
+      {focus === "recipients" && (
+        <div className="card">
+          <TopRecipients
+            data={topCounterparties(transactions, 20)}
+            transactions={transactions}
+            onOpenTxn={onOpenTxn}
+            onSeeAll={onSeeAllRecipient}
+          />
+        </div>
+      )}
+
+      {focus === "charges" && <ChargesView transactions={transactions} onOpenTxn={onOpenTxn} />}
+    </div>
+  );
+}
+
+function ChargesView({
+  transactions,
+  onOpenTxn,
+}: {
+  transactions: Transaction[];
+  onOpenTxn: (t: Transaction) => void;
+}) {
+  const withFees = transactions
+    .filter((t) => t.cost > 0)
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+  const total = withFees.reduce((s, t) => s + t.cost, 0);
+  const spent = transactions.reduce((s, t) => s + (t.direction === "expense" ? t.amount : 0), 0);
+  const pct = spent > 0 ? Math.round((total / spent) * 100) : 0;
+
+  return (
+    <>
+      <div className="charges-hero">
+        <div className="charges-label">Total charges paid</div>
+        <div className="charges-total">{kes(total)}</div>
+        <div className="charges-sub">
+          {withFees.length} charged {withFees.length === 1 ? "transaction" : "transactions"}
+          {pct > 0 && <> · {pct}% of what you spent</>}
+        </div>
+      </div>
+      <div className="section-head">
+        <h2>Charged transactions</h2>
+      </div>
+      <div className="card" style={{ padding: "4px 12px" }}>
+        {withFees.length === 0 ? (
+          <div className="tx-empty">No transaction charges yet.</div>
+        ) : (
+          withFees.map((t) => (
+            <button
+              key={t.ref || t.raw}
+              type="button"
+              className="tx tx-btn"
+              onClick={() => onOpenTxn(t)}
+            >
+              <span
+                className="tx-arrow"
+                style={{
+                  color: "var(--text-secondary)",
+                  background: "var(--surface-2)",
+                }}
+                aria-hidden
+              >
+                <IconPercent size={18} />
+              </span>
+              <div className="tx-main">
+                <div className="tx-title">{t.counterparty ?? typeLabel(t.type)}</div>
+                <div className="tx-meta">
+                  <span>{typeLabel(t.type)}</span>
+                  <span>·</span>
+                  <span>{formatDate(t.date)}</span>
+                </div>
+              </div>
+              <div className="tx-amount">{kes(t.cost)}</div>
+            </button>
+          ))
+        )}
       </div>
     </>
   );

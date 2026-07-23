@@ -859,6 +859,56 @@ button {
   font-weight: 800;
 }
 
+/* ---- Focus sub-pages (Categories / Recipients / Charges / Insights) ---- */
+.focus {
+  padding-top: 2px;
+}
+.focus-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 0;
+  margin-bottom: 10px;
+}
+.focus-title {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+}
+.focus-lead {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+}
+.charges-hero {
+  background: #17171b;
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-card);
+}
+.charges-label {
+  font-size: 13px;
+  opacity: 0.65;
+}
+.charges-total {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+.charges-sub {
+  font-size: 12.5px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
 /* ---- Account / More screen ---- */
 .more {
   padding-top: 4px;
