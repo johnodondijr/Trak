@@ -93,7 +93,7 @@ export default function App() {
     () => (localStorage.getItem("trak.theme") as Theme) || "light",
   );
   const [hideBalance, setHideBalance] = useState(false);
-  const [selectedLine, setSelectedLine] = useState<"all" | string>("all");
+  const [selectedLine, setSelectedLine] = useState<string>("all");
   const [lastReadAt, setLastReadAt] = useState<Date | null>(() => {
     const raw = localStorage.getItem(LAST_READ_AT_KEY);
     if (!raw) return null;
@@ -109,8 +109,11 @@ export default function App() {
 
   const now = useMemo(() => new Date(), []);
   const lineOptions = useMemo(() => walletLineOptions(transactions), [transactions]);
-  const activeLine = selectedLine === "all" || lineOptions.some((l) => l.id === selectedLine)
-    ? selectedLine
+  const hasMultipleLines = lineOptions.length > 1;
+  const activeLine = hasMultipleLines
+    ? lineOptions.some((l) => l.id === selectedLine)
+      ? selectedLine
+      : lineOptions[0]?.id ?? "all"
     : "all";
   const walletTxns = useMemo(() => transactionsForLine(transactions, activeLine), [transactions, activeLine]);
   const bankTxns = useMemo(() => bankOnlyTransactions(transactions), [transactions]);
@@ -226,7 +229,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="tab-view" key={focus ?? tab}>
+        <div className="tab-view" key={`${focus ?? tab}:${activeLine}`}>
             {focus && (
               <FocusView
                 focus={focus}
@@ -465,15 +468,11 @@ function LineSelector({
   onSelect,
 }: {
   lines: ReturnType<typeof walletLineOptions>;
-  selected: "all" | string;
-  onSelect: (id: "all" | string) => void;
+  selected: string;
+  onSelect: (id: string) => void;
 }) {
-  const total = lines.reduce((sum, line) => sum + line.count, 0);
   return (
     <div className="line-selector" role="group" aria-label="M-PESA line">
-      <button aria-pressed={selected === "all"} onClick={() => onSelect("all")}>
-        All <span>{total}</span>
-      </button>
       {lines.map((line) => (
         <button key={line.id} aria-pressed={selected === line.id} onClick={() => onSelect(line.id)}>
           {line.label} <span>{line.count}</span>

@@ -13,7 +13,8 @@ function preference(t: Transaction): number {
 
 function keyOf(t: Transaction): string {
   if (!t.ref) return `raw:${t.raw}|${t.date.getTime()}`;
-  if (t.type === "fuliza") return `ref:${t.ref}:fuliza:${t.direction}:${t.amount}`;
+  const linePart = t.lineId ? `:${t.lineId}` : "";
+  if (t.type === "fuliza") return `ref:${t.ref}${linePart}:fuliza:${t.direction}:${t.amount}`;
   if (t.type === "balance" || t.type === "failed") return `ref:${t.ref}:${t.type}`;
   return `ref:${t.ref}:movement`;
 }
