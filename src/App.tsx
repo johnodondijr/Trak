@@ -226,10 +226,6 @@ export default function App() {
                   onToggleHidden={() => setHideBalance((h) => !h)}
                 />
 
-                <button className="add-cta" onClick={() => setImporting(true)}>
-                  <IconPlus size={17} /> Import messages
-                </button>
-
                 <div className="quick">
                   <button onClick={() => setFocus("categories")}>
                     <span className="q-circle">
