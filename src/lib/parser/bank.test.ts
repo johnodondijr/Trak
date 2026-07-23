@@ -76,6 +76,22 @@ describe("bank-sourced messages", () => {
     expect(t!.ref).toBe("TC357HWSFL");
   });
 
+  it("parses an I&M bank-originated send to M-Pesa", () => {
+    const t = parseMessage(
+      "Bank to M-PESA transfer of KES 1,250.00 to 254798378818 - JOSPHAT NYANGAU NYAKUNDI successfully processed. Transaction Ref ID: 819320370209. M-PESA Ref ID: TEI37DPKNZ",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.provider).toBe("bank");
+    expect(t!.institution).toBe("I&M");
+    expect(t!.type).toBe("send");
+    expect(t!.direction).toBe("expense");
+    expect(t!.amount).toBe(1250);
+    expect(t!.counterparty).toBe("JOSPHAT NYANGAU NYAKUNDI");
+    expect(t!.account).toBe("254798378818");
+    expect(t!.ref).toBe("TEI37DPKNZ");
+    expect(t!.category).toBe("transfers");
+  });
+
   it("parses an Absa bank-to-M-Pesa credit", () => {
     const t = parseMessage(
       "DAVID ONGEI ODONDI has transferred KES2000 to your MPESA ref: TA46ZIZAEO. Please await MPESA notification.",

@@ -130,6 +130,35 @@ function matchImBankToMpesaReceive(text: string): Omit<Transaction, "category"> 
   };
 }
 
+/** I&M bank-originated send to someone else's M-Pesa. */
+function matchImBankToMpesaSend(text: string): Omit<Transaction, "category"> | null {
+  const m = text.match(
+    new RegExp(
+      `Bank to M-?PESA transfer of\\s+${CURRENCY}([\\d,]+(?:\\.\\d+)?)\\s+to\\s+` +
+        `(\\+?\\d[\\d\\s]{6,14}\\d)\\s+-\\s+(.+?)\\s+successfully processed\\.\\s+` +
+        `Transaction Ref ID:\\s*([A-Z0-9]+)\\.\\s+M-?PESA Ref ID:\\s*([A-Z0-9]{8,12})`,
+      "i",
+    ),
+  );
+  if (!m) return null;
+  const amount = parseAmount(m[1]);
+  if (isNaN(amount)) return null;
+  return {
+    ref: m[5],
+    provider: "bank",
+    type: "send",
+    direction: "expense",
+    amount,
+    cost: 0,
+    balance: null,
+    counterparty: cleanName(m[3]),
+    account: m[2].replace(/\s/g, ""),
+    institution: "I&M",
+    date: parseDate(text),
+    raw: text,
+  };
+}
+
 /** Absa bank-to-M-Pesa credit: "NAME has transferred KESX to your MPESA ref: REF." */
 function matchAbsaBankToMpesaReceive(text: string): Omit<Transaction, "category"> | null {
   const m = text.match(
@@ -247,6 +276,7 @@ const MATCHERS = [
   matchCardPurchase,
   matchBankToMpesaReceive,
   matchImBankToMpesaReceive,
+  matchImBankToMpesaSend,
   matchAbsaBankToMpesaReceive,
   matchEquityTillPayment,
   matchEquityBillPayment,

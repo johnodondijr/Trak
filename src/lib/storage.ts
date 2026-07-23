@@ -1,13 +1,13 @@
 /**
  * LocalStorage persistence for imported transactions.
  *
- * Transactions are stored as their raw SMS text plus a snapshot of the parsed
- * fields. On load we keep the stored raw text as the source of truth and could
- * re-parse if the parser improves; for now we rehydrate the stored snapshot
- * (converting the ISO date string back into a `Date`).
+ * Transactions are stored as their raw SMS text plus a parsed snapshot. On load
+ * we re-parse the raw text so parser/category improvements apply to existing
+ * imports, while preserving the stored SMS receipt date.
  */
 import type { Transaction } from "./parser/types";
-import { mergeTransactionSets } from "./transactionDedupe";
+import { parseMessage } from "./parser";
+import { dedupeTransactions, mergeTransactionSets } from "./transactionDedupe";
 
 const STORAGE_KEY = "trak.transactions.v1";
 
@@ -20,9 +20,15 @@ export function loadTransactions(): Transaction[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as StoredTransaction[];
-    return parsed
-      .map((t) => ({ ...t, date: new Date(t.date) }))
-      .filter((t) => !isNaN(t.date.getTime()));
+    const rehydrated = parsed
+      .map((t) => {
+        const date = new Date(t.date);
+        if (isNaN(date.getTime())) return null;
+        const reparsed = t.raw ? parseMessage(t.raw) : null;
+        return reparsed ? { ...reparsed, date } : { ...t, date };
+      })
+      .filter((t): t is Transaction => t !== null);
+    return dedupeTransactions(rehydrated);
   } catch {
     return [];
   }
