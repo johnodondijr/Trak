@@ -73,6 +73,28 @@ export const IconSun = ({ size }: IconProps) => (
     <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
   </Svg>
 );
+export const IconUser = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </Svg>
+);
+export const IconChevronRight = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <path d="m9 6 6 6-6 6" />
+  </Svg>
+);
+export const IconTrash = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+  </Svg>
+);
+export const IconShield = ({ size }: IconProps) => (
+  <Svg size={size}>
+    <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6Z" />
+    <path d="m9 12 2 2 4-4" />
+  </Svg>
+);
 export const IconBell = ({ size }: IconProps) => (
   <Svg size={size}>
     <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />

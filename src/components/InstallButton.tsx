@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { IconUpload } from "./icons";
+import { IconUpload, IconChevronRight } from "./icons";
 
 interface BIPEvent extends Event {
   prompt: () => Promise<void>;
@@ -17,7 +17,7 @@ declare global {
  * prompt (captured early in index.html into window.__trakInstallPrompt) and the
  * app isn't already installed. Clicking triggers the native install dialog.
  */
-export function InstallButton({ variant = "landing" }: { variant?: "landing" | "header" }) {
+export function InstallButton({ variant = "landing" }: { variant?: "landing" | "header" | "row" }) {
   const [available, setAvailable] = useState(Boolean(window.__trakInstallPrompt));
   const [installed, setInstalled] = useState(
     typeof window !== "undefined" && window.matchMedia?.("(display-mode: standalone)").matches,
@@ -57,6 +57,17 @@ export function InstallButton({ variant = "landing" }: { variant?: "landing" | "
 
   if (installed || !available) return null;
 
+  if (variant === "row") {
+    return (
+      <button className="more-row" onClick={install}>
+        <span className="more-ico">
+          <IconUpload size={19} />
+        </span>
+        <span className="more-label">Install Trak app</span>
+        <IconChevronRight size={18} />
+      </button>
+    );
+  }
   if (variant === "header") {
     return (
       <button className="icon-btn" onClick={install} aria-label="Install Trak app" title="Install Trak app">

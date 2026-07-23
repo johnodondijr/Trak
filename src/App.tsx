@@ -45,6 +45,11 @@ import {
   IconArrowDownLeft,
   IconArrowUpRight,
   IconBulb,
+  IconBell,
+  IconUser,
+  IconShield,
+  IconTrash,
+  IconChevronRight,
 } from "./components/icons";
 
 type Range = "today" | "week" | "month" | "all";
@@ -61,7 +66,7 @@ const RANGE_PHRASE: Record<Range, string> = {
   all: "all time",
 };
 
-type Tab = "overview" | "activity" | "trends";
+type Tab = "overview" | "activity" | "trends" | "more";
 type Theme = "light" | "dark";
 
 export default function App() {
@@ -146,24 +151,17 @@ export default function App() {
         <header className="app-header">
           <div className="hi">
             <div className="hi-logo">
-              <TrakMark size={28} />
+              <TrakMark size={26} />
             </div>
             <div>
               <small>{greeting(now)} 👋</small>
-              <h1>Your money on Trak</h1>
+              <h1>{tab === "more" ? "Account" : tab === "trends" ? "Statistics" : tab === "activity" ? "Transactions" : "Your money"}</h1>
             </div>
           </div>
           <div className="header-actions">
             <InstallButton variant="header" />
-            <button
-              className="icon-btn"
-              onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-              aria-label="Toggle dark mode"
-            >
-              {theme === "dark" ? <IconSun size={19} /> : <IconMoon size={19} />}
-            </button>
-            <button className="icon-btn" onClick={() => setImporting(true)} aria-label="Import">
-              <IconPlus size={19} />
+            <button className="icon-btn" onClick={() => setTab("more")} aria-label="Account">
+              <IconBell size={19} />
             </button>
           </div>
         </header>
@@ -193,30 +191,34 @@ export default function App() {
                   onToggleHidden={() => setHideBalance((h) => !h)}
                 />
 
+                <button className="add-cta" onClick={() => setImporting(true)}>
+                  <IconPlus size={18} /> Import messages
+                </button>
+
                 <div className="quick">
-                  <button onClick={() => setImporting(true)}>
-                    <span className="q-circle">
-                      <IconPlus size={22} />
-                    </span>
-                    Import
-                  </button>
                   <button onClick={() => setTab("activity")}>
                     <span className="q-circle">
-                      <IconActivity size={22} />
+                      <IconActivity size={21} />
                     </span>
                     Transactions
                   </button>
                   <button onClick={() => setTab("trends")}>
                     <span className="q-circle">
-                      <IconTrends size={22} />
+                      <IconTrends size={21} />
                     </span>
                     Stats
                   </button>
                   <button onClick={() => setTab("trends")}>
                     <span className="q-circle">
-                      <IconBulb size={22} />
+                      <IconBulb size={21} />
                     </span>
                     Insights
+                  </button>
+                  <button onClick={() => setTab("more")}>
+                    <span className="q-circle">
+                      <IconUser size={21} />
+                    </span>
+                    Account
                   </button>
                 </div>
 
@@ -348,13 +350,18 @@ export default function App() {
                     />
                   </div>
                 </section>
-                <div className="footer">
-                  <button className="btn btn-ghost" onClick={handleClear}>
-                    Clear all data
-                  </button>
-                  <p>Trak reads your messages locally in your browser. Nothing is uploaded.</p>
-                </div>
               </>
+            )}
+
+            {tab === "more" && (
+              <MoreScreen
+                count={transactions.length}
+                theme={theme}
+                onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+                onImport={() => setImporting(true)}
+                onSample={loadSample}
+                onClear={handleClear}
+              />
             )}
           </div>
         </div>
@@ -385,6 +392,12 @@ export default function App() {
             </span>
             Stats
           </button>
+          <button aria-current={tab === "more"} onClick={() => setTab("more")}>
+            <span className="tico">
+              <IconUser size={22} />
+            </span>
+            Account
+          </button>
         </nav>
       )}
 
@@ -413,32 +426,113 @@ function HeroCard({
     balance?.provider === "airtel" ? "Airtel Money" : balance?.provider === "mpesa" ? "M-PESA" : "Wallet";
   const up = rangeNet >= 0;
   return (
-    <section className="hero">
-      <div className="hero-top">
-        <span className="hero-label">{hasBalance ? "Total balance" : `Net ${rangePhrase}`}</span>
-        <span className="hero-chip">
-          <span className="brandmark" />
-          {providerLabel}
-        </span>
+    <>
+      <section className="hero">
+        <div className="hero-top">
+          <span className="hero-label">{hasBalance ? "Total balance" : `Net ${rangePhrase}`}</span>
+          <span className="hero-brand">{providerLabel}</span>
+        </div>
+        <div className="hero-amount">
+          <span className="cur">KES</span>
+          {hidden ? "••••••" : Math.round(bigValue).toLocaleString("en-KE")}
+          <button
+            className="hero-eye"
+            onClick={onToggleHidden}
+            aria-label={hidden ? "Show balance" : "Hide balance"}
+          >
+            {hidden ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+          </button>
+        </div>
+        <div className="hero-foot">
+          <span className="hero-dots">•••• •••• •••• ••••</span>
+          <span className="hero-delta-inline">
+            {up ? <IconArrowUp size={12} /> : <IconArrowDown size={12} />}
+            {kes(Math.abs(rangeNet))} net {rangePhrase}
+          </span>
+        </div>
+      </section>
+      <div className="hero-dots-row">
+        <span className="active" />
+        <span />
+        <span />
       </div>
-      <div className="hero-amount">
-        <span className="cur">KES</span>
-        {hidden ? "••••••" : Math.round(bigValue).toLocaleString("en-KE")}
-        <button className="hero-eye" onClick={onToggleHidden} aria-label={hidden ? "Show balance" : "Hide balance"}>
-          {hidden ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+    </>
+  );
+}
+
+function MoreScreen({
+  count,
+  theme,
+  onToggleTheme,
+  onImport,
+  onSample,
+  onClear,
+}: {
+  count: number;
+  theme: Theme;
+  onToggleTheme: () => void;
+  onImport: () => void;
+  onSample: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="more">
+      <div className="more-profile">
+        <div className="more-avatar">
+          <TrakMark size={30} />
+        </div>
+        <div>
+          <div className="more-name">Your money on Trak</div>
+          <div className="more-sub">{count} transactions · stored on this device</div>
+        </div>
+      </div>
+
+      <div className="more-group">
+        <button className="more-row" onClick={onToggleTheme}>
+          <span className="more-ico">{theme === "dark" ? <IconSun size={19} /> : <IconMoon size={19} />}</span>
+          <span className="more-label">Dark mode</span>
+          <span className={`more-switch ${theme === "dark" ? "on" : ""}`}>
+            <span />
+          </span>
+        </button>
+        <InstallButton variant="row" />
+        <button className="more-row" onClick={onImport}>
+          <span className="more-ico">
+            <IconPlus size={19} />
+          </span>
+          <span className="more-label">Import messages</span>
+          <IconChevronRight size={18} />
+        </button>
+        <button className="more-row" onClick={onSample}>
+          <span className="more-ico">
+            <IconBulb size={19} />
+          </span>
+          <span className="more-label">Load sample data</span>
+          <IconChevronRight size={18} />
         </button>
       </div>
-      <div className="hero-delta">
-        <span className="pill">
-          {up ? <IconArrowUp size={13} /> : <IconArrowDown size={13} />} {kes(Math.abs(rangeNet))}
-        </span>
-        net {rangePhrase}
+
+      <div className="more-group">
+        <div className="more-row static">
+          <span className="more-ico">
+            <IconShield size={19} />
+          </span>
+          <span className="more-label">
+            Privacy
+            <small>Read locally in your browser — nothing is uploaded.</small>
+          </span>
+        </div>
+        <button className="more-row danger" onClick={onClear}>
+          <span className="more-ico">
+            <IconTrash size={19} />
+          </span>
+          <span className="more-label">Clear all data</span>
+          <IconChevronRight size={18} />
+        </button>
       </div>
-      <div className="hero-foot">
-        <span className="hero-dots">•••• •••• •••• ••••</span>
-        <span className="hero-foot-brand">{providerLabel}</span>
-      </div>
-    </section>
+
+      <p className="more-foot">Trak · Mobile money spending tracker</p>
+    </div>
   );
 }
 
