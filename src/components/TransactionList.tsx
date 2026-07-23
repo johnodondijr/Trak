@@ -3,6 +3,9 @@ import type { Transaction, Category } from "../lib/parser/types";
 import { categoryLabel, dateGroupLabel, typeLabel } from "../lib/format";
 import { TxnRow } from "./TxnRow";
 
+const RECENT_DAYS = 7;
+const PAGE_SIZE = 80;
+
 /**
  * The transaction ledger, styled as avatar-led rows grouped by day
  * (Today / Yesterday / date). In full mode it adds a search box and category
@@ -27,12 +30,19 @@ export function TransactionList({
 }) {
   const [query, setQuery] = useState(presetQuery ?? "");
   const [category, setCategory] = useState<Category | "all">(presetCategory ?? "all");
+  const [period, setPeriod] = useState("recent");
+  const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
 
   // Re-seed the filter when a drill-down "See all" hands one in.
   useEffect(() => {
     if (presetQuery !== undefined) setQuery(presetQuery);
     if (presetCategory !== undefined) setCategory(presetCategory);
+    setPeriod("recent");
   }, [presetQuery, presetCategory]);
+
+  useEffect(() => {
+    setVisibleLimit(PAGE_SIZE);
+  }, [query, category, period]);
 
   const categories = useMemo(() => {
     const set = new Set<Category>();
@@ -54,16 +64,42 @@ export function TransactionList({
     });
   }, [transactions, query, category]);
 
+  const monthOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const t of filtered) {
+      const key = monthKey(t.date);
+      if (!seen.has(key)) {
+        seen.set(key, t.date.toLocaleString("en-KE", { month: "long", year: "numeric" }));
+      }
+    }
+    return [...seen.entries()].map(([key, label]) => ({ key, label }));
+  }, [filtered]);
+
+  const visible = useMemo(() => {
+    if (period !== "recent") return filtered.filter((t) => monthKey(t.date) === period);
+    const latest = filtered.reduce<Date | null>(
+      (max, t) => (!max || t.date.getTime() > max.getTime() ? t.date : max),
+      null,
+    );
+    if (!latest) return [];
+    const from = new Date(latest);
+    from.setDate(from.getDate() - (RECENT_DAYS - 1));
+    from.setHours(0, 0, 0, 0);
+    return filtered.filter((t) => t.date.getTime() >= from.getTime());
+  }, [filtered, period]);
+
+  const rendered = useMemo(() => visible.slice(0, visibleLimit), [visible, visibleLimit]);
+
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
-    for (const t of filtered) {
+    for (const t of rendered) {
       const key = dateGroupLabel(t.date, now);
       const arr = map.get(key) ?? [];
       arr.push(t);
       map.set(key, arr);
     }
     return [...map.entries()];
-  }, [filtered, now]);
+  }, [rendered, now]);
 
   if (compact) {
     return (
@@ -101,8 +137,14 @@ export function TransactionList({
         </select>
       </div>
 
+      <div className="tx-period-note">
+        {period === "recent" ? `Showing last ${RECENT_DAYS} days` : monthOptions.find((m) => m.key === period)?.label}
+      </div>
+
       {filtered.length === 0 ? (
         <div className="tx-empty">No transactions match your filters.</div>
+      ) : visible.length === 0 ? (
+        <div className="tx-empty">No transactions in this period.</div>
       ) : (
         groups.map(([label, items]) => (
           <div className="day-group" key={label}>
@@ -115,6 +157,37 @@ export function TransactionList({
           </div>
         ))
       )}
+
+      {visible.length > rendered.length && (
+        <button className="tx-show-more" type="button" onClick={() => setVisibleLimit((n) => n + PAGE_SIZE)}>
+          Show more transactions
+        </button>
+      )}
+
+      {monthOptions.length > 0 && (
+        <div className="tx-months">
+          <div className="tx-months-title">View by month</div>
+          <div className="tx-month-grid">
+            <button type="button" aria-pressed={period === "recent"} onClick={() => setPeriod("recent")}>
+              Last {RECENT_DAYS} days
+            </button>
+            {monthOptions.map((month) => (
+              <button
+                key={month.key}
+                type="button"
+                aria-pressed={period === month.key}
+                onClick={() => setPeriod(month.key)}
+              >
+                {month.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function monthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }

@@ -136,6 +136,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 html,
 body,
@@ -157,6 +158,8 @@ button {
   font-family: inherit;
   cursor: pointer;
   color: inherit;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 /* ---- Device / app column ---- */
@@ -1161,6 +1164,52 @@ button {
   text-align: center;
   color: var(--muted);
   font-size: 13.5px;
+}
+.tx-period-note {
+  margin: 4px 0 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tx-months {
+  margin-top: 16px;
+  padding-top: 4px;
+}
+.tx-show-more {
+  width: 100%;
+  margin-top: 10px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ink-btn);
+  color: var(--surface-1);
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.tx-months-title {
+  margin-bottom: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+.tx-month-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tx-month-grid button {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.tx-month-grid button[aria-pressed="true"] {
+  background: var(--ink-btn);
+  border-color: var(--ink-btn);
+  color: var(--surface-1);
 }
 
 /* ---- Trend area chart ---- */
