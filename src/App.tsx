@@ -179,7 +179,6 @@ export default function App() {
 
   const hasData = transactions.length > 0;
   const showingSample = useMemo(() => hasSample(transactions), [transactions]);
-  const spent = rangeTotals.expense + rangeTotals.charges;
 
   return (
     <div className="device">
@@ -288,7 +287,7 @@ export default function App() {
                     />
                     <Mini
                       label="Money out"
-                      value={kes(spent)}
+                      value={kes(rangeTotals.expense)}
                       cls="neg"
                       color="var(--expense)"
                       icon={<IconArrowUpRight size={17} />}

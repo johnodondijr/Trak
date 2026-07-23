@@ -100,6 +100,34 @@ describe("M-Pesa parsing", () => {
     expect(t!.category).toBe("airtime");
   });
 
+  it("parses M-Shwari withdrawals into M-Pesa as money in", () => {
+    const t = parseMessage(
+      "UG1DRA2A06 Confirmed.Ksh600.00 transferred from M-Shwari account on 1/7/26 at 6:26 PM. M-Shwari balance is Ksh415.47 .M-PESA balance is Ksh601.69 .Transaction cost Ksh.0.00",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.type).toBe("deposit");
+    expect(t!.direction).toBe("income");
+    expect(t!.amount).toBe(600);
+    expect(t!.cost).toBe(0);
+    expect(t!.balance).toBe(601.69);
+    expect(t!.counterparty).toBe("M-Shwari");
+    expect(t!.category).toBe("deposit");
+  });
+
+  it("parses M-Shwari savings transfers out of M-Pesa as money out", () => {
+    const t = parseMessage(
+      "UFBDR7Q3QG Confirmed.Ksh1,000.00 transferred to M-Shwari account on 11/6/26 at 5:48 PM. M-PESA balance is Ksh1.69 .New M-Shwari saving account balance is Ksh1,015.47. Transaction cost Ksh.0.00",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.type).toBe("send");
+    expect(t!.direction).toBe("expense");
+    expect(t!.amount).toBe(1000);
+    expect(t!.cost).toBe(0);
+    expect(t!.balance).toBe(1.69);
+    expect(t!.counterparty).toBe("M-Shwari");
+    expect(t!.category).toBe("transfers");
+  });
+
   it("parses a withdrawal", () => {
     const t = parseMessage(
       "TFA7H8I9J0 Confirmed. On 7/7/26 at 6:00 PM Withdraw Ksh3,000.00 from 456789 - QUICKCASH AGENCY. New M-PESA balance is Ksh5,430.00. Transaction cost, Ksh28.00.",
@@ -118,6 +146,19 @@ describe("M-Pesa parsing", () => {
     expect(t!.type).toBe("fuliza");
     expect(t!.amount).toBe(500);
     expect(t!.direction).toBe("neutral");
+    expect(t!.category).toBe("fuliza");
+  });
+
+  it("parses Fuliza repayment from M-Pesa as money out", () => {
+    const t = parseMessage(
+      "UG7PIABDT4\n Confirmed. Ksh 592.59 from your M-PESA has been used to fully pay your outstanding Fuliza M-PESA. Available Fuliza M-PESA limit is Ksh 625.00. Your M-PESA balance is 507.41.",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.type).toBe("fuliza");
+    expect(t!.direction).toBe("expense");
+    expect(t!.amount).toBe(592.59);
+    expect(t!.balance).toBe(507.41);
+    expect(t!.counterparty).toBe("Fuliza");
     expect(t!.category).toBe("fuliza");
   });
 

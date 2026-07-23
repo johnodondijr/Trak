@@ -26,7 +26,7 @@ function extractRef(raw: string): string {
 
 /** Extract "Transaction cost, Ksh13.00." → 13. Defaults to 0. */
 function extractCost(raw: string): number {
-  const m = raw.match(/Transaction cost[,:]?\s*Ksh?\s*([\d,]+(?:\.\d+)?)/i);
+  const m = raw.match(/Transaction cost[,:]?\s*Ksh?\.?\s*([\d,]+(?:\.\d+)?)/i);
   if (!m) return 0;
   const cost = parseAmount(m[1]);
   return isNaN(cost) ? 0 : cost;
@@ -34,9 +34,10 @@ function extractCost(raw: string): number {
 
 /** Extract "New M-PESA balance is Ksh4,500.00." → 4500. Null when absent. */
 function extractBalance(raw: string): number | null {
-  const m = raw.match(
-    /(?:New\s+M-?PESA\s+balance|M-?PESA\s+balance)\s+is\s+Ksh?\s*([\d,]+(?:\.\d+)?)/i,
-  );
+  const m =
+    raw.match(
+      /(?:New\s+M-?PESA\s+balance|Your\s+M-?PESA\s+balance|M-?PESA\s+balance)\s+is\s+(?:Ksh?\.?\s*)?([\d,]+(?:\.\d+)?)/i,
+    ) ?? raw.match(/M-?PESA\s+Account\s*:\s*Ksh?\.?\s*([\d,]+(?:\.\d+)?)/i);
   if (!m) return null;
   const bal = parseAmount(m[1]);
   return isNaN(bal) ? null : bal;
@@ -204,7 +205,37 @@ function matchDeposit(raw: string): PartialTxn | null {
   return null;
 }
 
+/** M-Shwari wallet transfer: "Ksh1,000 transferred from/to M-Shwari account". */
+function matchMshwariTransfer(raw: string): PartialTxn | null {
+  const m = raw.match(
+    /Ksh?\.?\s*([\d,]+(?:\.\d+)?)\s+transferred\s+(from|to)\s+M-Shwari account\b/i,
+  );
+  if (!m) return null;
+  const direction = m[2].toLowerCase() === "from" ? "income" : "expense";
+  return {
+    type: direction === "income" ? "deposit" : "send",
+    direction,
+    amount: parseAmount(m[1]),
+    counterparty: "M-Shwari",
+    account: "M-Shwari account",
+  };
+}
+
 /** Fuliza borrowing: "Fuliza M-PESA amount is Ksh500.00.". */
+function matchFulizaRepayment(raw: string): PartialTxn | null {
+  const m = raw.match(
+    /Ksh?\.?\s*([\d,]+(?:\.\d+)?)\s+from your M-?PESA has been used to\s+(?:fully|partially)\s+pay your outstanding Fuliza M-?PESA/i,
+  );
+  if (!m) return null;
+  return {
+    type: "fuliza",
+    direction: "expense",
+    amount: parseAmount(m[1]),
+    counterparty: "Fuliza",
+    account: null,
+  };
+}
+
 function matchFuliza(raw: string): PartialTxn | null {
   const m = raw.match(/Fuliza\s+M-?PESA\s+amount is\s+Ksh?\s*([\d,]+(?:\.\d+)?)/i);
   if (!m) return null;
@@ -255,7 +286,9 @@ function matchBalance(raw: string): PartialTxn | null {
 // "sent to X for account Y" and "paid to X for account Y" are Paybills.
 const MATCHERS: Array<(raw: string) => PartialTxn | null> = [
   matchReversal,
+  matchFulizaRepayment,
   matchFuliza,
+  matchMshwariTransfer,
   matchAirtime,
   matchPaybill,
   matchTill,
