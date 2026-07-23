@@ -50,6 +50,7 @@ import {
   IconShield,
   IconTrash,
   IconChevronRight,
+  IconTransfer,
 } from "./components/icons";
 
 type Range = "today" | "week" | "month" | "all";
@@ -377,13 +378,13 @@ export default function App() {
           </button>
           <button aria-current={tab === "activity"} onClick={() => setTab("activity")}>
             <span className="tico">
-              <IconActivity size={22} />
+              <IconTransfer size={22} />
             </span>
             Transactions
           </button>
           <button className="primary" onClick={() => setImporting(true)} aria-label="Import">
             <span className="tico">
-              <IconPlus size={24} />
+              <IconPlus size={26} />
             </span>
           </button>
           <button aria-current={tab === "trends"} onClick={() => setTab("trends")}>

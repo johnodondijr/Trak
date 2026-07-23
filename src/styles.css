@@ -1137,14 +1137,14 @@ button {
   left: 50%;
   transform: translateX(-50%);
   width: min(452px, calc(100vw - 28px));
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  box-shadow: var(--shadow-float);
+  background: #17171b;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 28px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 8px 10px;
+  padding: 11px 14px;
   z-index: 40;
 }
 .tabbar button {
@@ -1153,14 +1153,15 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   font-size: 10px;
   font-weight: 600;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.5);
   padding: 4px 4px;
   border-radius: 14px;
   flex: 1;
   min-width: 0;
+  transition: color 0.14s ease;
 }
 .tabbar button .tico {
   font-size: 19px;
@@ -1168,21 +1169,24 @@ button {
   place-items: center;
 }
 .tabbar button[aria-current="true"] {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 .tabbar button.primary {
   background: var(--yellow);
   color: #16161a;
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
   justify-content: center;
   gap: 0;
-  margin-top: -24px;
-  box-shadow: 0 8px 18px rgba(245, 210, 17, 0.5);
+  margin-top: -34px;
+  box-shadow:
+    0 0 0 6px #17171b,
+    0 0 22px 2px rgba(245, 210, 17, 0.55),
+    0 8px 18px rgba(245, 210, 17, 0.4);
 }
 .tabbar button.primary .tico {
-  font-size: 22px;
+  font-size: 24px;
 }
 
 /* ---- Import modal ---- */
