@@ -88,7 +88,7 @@ export function StatsScreen({
       <div className="section-head" style={{ marginTop: 20 }}>
         <h2>Recent {isIncome ? "income" : "spending"}</h2>
       </div>
-      <div className="card" style={{ padding: "4px 12px" }}>
+      <div className="flat-panel">
         {recent.length === 0 ? (
           <div className="tx-empty">Nothing here yet.</div>
         ) : (

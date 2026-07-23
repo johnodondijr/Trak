@@ -107,7 +107,7 @@ export function TransactionList({
         groups.map(([label, items]) => (
           <div className="day-group" key={label}>
             <div className="day-label">{label}</div>
-            <div className="card" style={{ padding: "4px 12px" }}>
+            <div className="flat-panel">
               {items.map((t) => (
                 <TxnRow key={t.ref || t.raw} txn={t} onClick={onOpenTxn} />
               ))}

@@ -53,7 +53,7 @@ export function CategoryBreakdown({
                   className="cat-chip"
                   style={{
                     color: categoryColor(row.category),
-                    background: `color-mix(in srgb, ${categoryColor(row.category)} 14%, var(--surface-1))`,
+                    background: `color-mix(in srgb, ${categoryColor(row.category)} 14%, var(--screen))`,
                   }}
                 >
                   <CategoryGlyph category={row.category} size={16} />

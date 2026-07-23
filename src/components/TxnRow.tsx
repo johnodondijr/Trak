@@ -32,7 +32,7 @@ export function TxnRow({
     <>
       <span
         className="tx-arrow"
-        style={{ color, background: `color-mix(in srgb, ${color} 13%, var(--surface-1))` }}
+        style={{ color, background: `color-mix(in srgb, ${color} 13%, var(--screen))` }}
         aria-hidden
       >
         {isIncome ? (

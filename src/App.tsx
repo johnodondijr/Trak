@@ -111,6 +111,9 @@ export default function App() {
   // Memoized so switching to the Trends tab doesn't recompute on every render.
   const allCategories = useMemo(() => byCategory(transactions), [transactions]);
   const allRecipients = useMemo(() => topCounterparties(transactions, 6), [transactions]);
+  const displayName = useMemo(() => loggedInName(), []);
+  const headerTitle =
+    tab === "more" ? "Account" : tab === "trends" ? "Statistics" : tab === "activity" ? "Transactions" : "Your money";
 
   function revealImported(merged: Transaction[]) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -166,8 +169,8 @@ export default function App() {
               <TrakMark size={26} />
             </div>
             <div>
-              <small>{greeting(now)} 👋</small>
-              <h1>{tab === "more" ? "Account" : tab === "trends" ? "Statistics" : tab === "activity" ? "Transactions" : "Your money"}</h1>
+              <small>{greeting(now)}, {displayName}</small>
+              <h1>{headerTitle}</h1>
             </div>
           </div>
           <div className="header-actions">
@@ -278,36 +281,24 @@ export default function App() {
                   </div>
                 </div>
 
-                <section className="section">
-                  <div className="section-head">
-                    <h2>Spending by category</h2>
-                    <span className="sub">{RANGE_PHRASE[range]}</span>
-                  </div>
-                  <div className="card">
-                    <CategoryBreakdown
-                      data={categories}
-                      transactions={inRange}
-                      onOpenTxn={setDetailTxn}
-                      onSeeAll={(c) => seeAllInActivity({ category: c })}
-                    />
-                  </div>
-                </section>
-
-                <section className="section">
-                  <div className="section-head">
-                    <h2>Insights</h2>
-                    <button className="link" onClick={() => setFocus("insights")}>
-                      See all
-                    </button>
-                  </div>
-                  <InsightsPanel insights={tips} />
-                </section>
-
                 <RecentPreview
                   transactions={transactions}
                   onSeeAll={() => seeAllInActivity({})}
                   onOpenTxn={setDetailTxn}
                 />
+
+                <section className="section flat-section">
+                  <div className="section-head">
+                    <h2>Spending by category</h2>
+                    <span className="sub">{RANGE_PHRASE[range]}</span>
+                  </div>
+                  <CategoryBreakdown
+                    data={categories}
+                    transactions={inRange}
+                    onOpenTxn={setDetailTxn}
+                    onSeeAll={(c) => seeAllInActivity({ category: c })}
+                  />
+                </section>
               </>
             )}
 
@@ -365,7 +356,7 @@ export default function App() {
                   <div className="section-head">
                     <h2>All-time categories</h2>
                   </div>
-                  <div className="card">
+                  <div className="flat-panel">
                     <CategoryBreakdown
                       data={allCategories}
                       transactions={transactions}
@@ -534,7 +525,7 @@ function FocusView({
           <div className="section-head" style={{ marginTop: 18 }}>
             <h2>All categories</h2>
           </div>
-          <div className="card">
+          <div className="flat-panel">
             <CategoryBreakdown
               data={allCategories}
               transactions={transactions}
@@ -588,7 +579,7 @@ function ChargesView({
       <div className="section-head">
         <h2>Charged transactions</h2>
       </div>
-      <div className="card" style={{ padding: "4px 12px" }}>
+      <div className="flat-panel">
         {withFees.length === 0 ? (
           <div className="tx-empty">No transaction charges yet.</div>
         ) : (
@@ -719,7 +710,7 @@ function Mini({
     <div className="mini">
       <span
         className="mini-chip"
-        style={{ color, background: `color-mix(in srgb, ${color} 15%, var(--surface-1))` }}
+        style={{ color, background: `color-mix(in srgb, ${color} 15%, var(--screen))` }}
       >
         {icon}
       </span>
@@ -748,11 +739,20 @@ function RecentPreview({
           See all
         </button>
       </div>
-      <div className="card" style={{ paddingTop: 4, paddingBottom: 4 }}>
+      <div className="flat-panel">
         <TransactionList transactions={recent} compact onOpenTxn={onOpenTxn} />
       </div>
     </section>
   );
+}
+
+function loggedInName(): string {
+  const keys = ["trak.displayName", "trak.userName", "trak.user.name"];
+  for (const key of keys) {
+    const value = localStorage.getItem(key)?.trim();
+    if (value) return value.split(/\s+/)[0];
+  }
+  return "there";
 }
 
 function filterByRange(txns: Transaction[], range: Range, now: Date): Transaction[] {

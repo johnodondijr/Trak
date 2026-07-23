@@ -548,6 +548,16 @@ button {
   padding: 16px;
   box-shadow: var(--shadow-card);
 }
+.flat-section {
+  padding: 0 2px;
+}
+.flat-panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
 
 /* ---- Period segmented control ---- */
 .segmented {
@@ -581,11 +591,11 @@ button {
   margin-top: 14px;
 }
 .mini {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 13px 12px;
-  box-shadow: var(--shadow-card);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 10px 2px;
+  box-shadow: none;
 }
 .mini-chip {
   width: 30px;
@@ -633,7 +643,7 @@ button {
 .barlist {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 18px;
 }
 .barrow {
   display: grid;
@@ -664,8 +674,8 @@ button {
 }
 .barrow .bartrack {
   grid-column: 1 / -1;
-  height: 8px;
-  background: var(--surface-2);
+  height: 7px;
+  background: color-mix(in srgb, var(--text-primary) 7%, transparent);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -682,20 +692,20 @@ button {
 
 /* ---- Transactions (avatar rows, date groups) ---- */
 .day-group + .day-group {
-  margin-top: 6px;
+  margin-top: 14px;
 }
 .day-label {
   font-size: 12.5px;
   font-weight: 700;
   color: var(--muted);
-  margin: 16px 4px 4px;
+  margin: 16px 4px 6px;
 }
 .tx {
   display: grid;
   grid-template-columns: 44px 1fr auto;
   gap: 12px;
   align-items: center;
-  padding: 11px 4px;
+  padding: 12px 4px;
 }
 .avatar,
 .tx-arrow {
@@ -706,8 +716,8 @@ button {
   line-height: 1;
 }
 .tx-arrow {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
 }
 
 /* chevron on expandable summary rows */
@@ -786,7 +796,7 @@ button {
 }
 .stats-toggle {
   display: flex;
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--text-primary) 7%, transparent);
   border-radius: 999px;
   padding: 4px;
   gap: 2px;
@@ -1449,7 +1459,7 @@ button {
 }
 .tx-btn:hover,
 .tx-btn:focus-visible {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
   outline: none;
 }
 
@@ -1480,14 +1490,14 @@ button {
   transform: rotate(180deg);
 }
 .drill-body {
-  margin: 4px 0 2px;
-  padding: 2px 0 6px;
+  margin: 7px 0 0;
+  padding: 3px 0 2px 54px;
   border-top: 1px dashed var(--grid);
 }
 .see-all {
   width: 100%;
   border: none;
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
   color: var(--accent);
   font-weight: 700;
   font-size: 12.5px;
