@@ -18,6 +18,20 @@
 import type { Transaction } from "./types";
 import { parseAmount, cleanName, parseDate, CURRENCY } from "./helpers";
 
+function parseDmyDate(date: string, time: string): Date {
+  const [dd, mm, yy] = date.split("-").map((n) => parseInt(n, 10));
+  const [hh, min] = time.split(":").map((n) => parseInt(n, 10));
+  const d = new Date(yy, mm - 1, dd, hh, min);
+  return isNaN(d.getTime()) ? parseDate(`${date} ${time}`) : d;
+}
+
+function parseMdySlashDate(date: string, time: string): Date {
+  const [mm, dd, yy] = date.split("/").map((n) => parseInt(n, 10));
+  const [hh, min, sec] = time.split(":").map((n) => parseInt(n, 10));
+  const d = new Date(yy < 100 ? 2000 + yy : yy, mm - 1, dd, hh, min, sec || 0);
+  return isNaN(d.getTime()) ? parseDate(`${date} at ${time}`) : d;
+}
+
 /** Detect a bank name mentioned in a card message ("using I&M …"). */
 function institutionFromCard(token: string): string {
   const t = token.toUpperCase();
@@ -88,6 +102,116 @@ function matchBankToMpesaReceive(text: string): Omit<Transaction, "category"> | 
   };
 }
 
+/** I&M bank-to-M-Pesa credit: "You have received KES X from NAME ... Mpesa Ref ID: REF." */
+function matchImBankToMpesaReceive(text: string): Omit<Transaction, "category"> | null {
+  const m = text.match(
+    new RegExp(
+      `You have received\\s+${CURRENCY}([\\d,]+(?:\\.\\d+)?)\\s+from\\s+(.+?)\\.\\s+` +
+        `Transaction Ref ID:\\s*([A-Z0-9]+)\\.\\s+M-?pesa Ref ID:\\s*([A-Z0-9]{8,12})`,
+      "i",
+    ),
+  );
+  if (!m) return null;
+  const amount = parseAmount(m[1]);
+  if (isNaN(amount)) return null;
+  return {
+    ref: m[4],
+    provider: "mpesa",
+    type: "receive",
+    direction: "income",
+    amount,
+    cost: 0,
+    balance: null,
+    counterparty: cleanName(m[2]),
+    account: null,
+    institution: "I&M",
+    date: parseDate(text),
+    raw: text,
+  };
+}
+
+/** Absa bank-to-M-Pesa credit: "NAME has transferred KESX to your MPESA ref: REF." */
+function matchAbsaBankToMpesaReceive(text: string): Omit<Transaction, "category"> | null {
+  const m = text.match(
+    new RegExp(`^(.+?)\\s+has transferred\\s+${CURRENCY}([\\d,]+(?:\\.\\d+)?)\\s+to your\\s+M-?PESA\\s+ref:\\s*([A-Z0-9]{8,12})`, "i"),
+  );
+  if (!m) return null;
+  const amount = parseAmount(m[2]);
+  if (isNaN(amount)) return null;
+  return {
+    ref: m[3],
+    provider: "mpesa",
+    type: "receive",
+    direction: "income",
+    amount,
+    cost: 0,
+    balance: null,
+    counterparty: cleanName(m[1]),
+    account: null,
+    institution: "Absa",
+    date: parseDate(text),
+    raw: text,
+  };
+}
+
+/** Equity confirmation for a till payment that rode on M-Pesa. */
+function matchEquityTillPayment(text: string): Omit<Transaction, "category"> | null {
+  const m = text.match(
+    new RegExp(
+      `Confirmed\\.\\s+Payment of\\s+${CURRENCY}([\\d,]+(?:\\.\\d+)?)\\s+to\\s+(.+?)\\s+` +
+        `Till No\\.\\s+([^\\s]+)\\s+has been received\\.\\s+Ref\\.\\s+([A-Z0-9]{8,12})\\s+on\\s+` +
+        `(\\d{2}-\\d{2}-\\d{4})\\s+at\\s+(\\d{1,2}:\\d{2})`,
+      "i",
+    ),
+  );
+  if (!m) return null;
+  const amount = parseAmount(m[1]);
+  if (isNaN(amount)) return null;
+  return {
+    ref: m[4],
+    provider: "mpesa",
+    type: "till",
+    direction: "expense",
+    amount,
+    cost: 0,
+    balance: null,
+    counterparty: cleanName(m[2]),
+    account: m[3],
+    institution: "Equity",
+    date: parseDmyDate(m[5], m[6]),
+    raw: text,
+  };
+}
+
+/** Equity bill-payment confirmation that shares an M-Pesa reference. */
+function matchEquityBillPayment(text: string): Omit<Transaction, "category"> | null {
+  const m = text.match(
+    new RegExp(
+      `Confirmed,\\s+Bill payment to\\s+(.+?)\\s+of\\s+${CURRENCY}([\\d,]+(?:\\.\\d+)?)\\s+` +
+        `for account\\s+(.+?)\\s+and Ref\\.\\s+([A-Z0-9]{8,12})\\s+on\\s+` +
+        `(\\d{2}-\\d{2}-\\d{4})\\s+at\\s+(\\d{1,2}:\\d{2})`,
+      "i",
+    ),
+  );
+  if (!m) return null;
+  const amount = parseAmount(m[2]);
+  if (isNaN(amount)) return null;
+  return {
+    ref: m[4],
+    provider: "mpesa",
+    type: "paybill",
+    direction: "expense",
+    amount,
+    cost: 0,
+    balance: null,
+    counterparty: cleanName(m[1]),
+    account: cleanName(m[3]),
+    institution: "Equity",
+    date: parseDmyDate(m[5], m[6]),
+    raw: text,
+  };
+}
+
 /** Send initiated from a bank app that settles on M-Pesa (MCoopCash etc.). */
 function matchBankAppSend(text: string): Omit<Transaction, "category"> | null {
   const m = text.match(
@@ -114,12 +238,20 @@ function matchBankAppSend(text: string): Omit<Transaction, "category"> | null {
     counterparty: cleanName(m[2]),
     account: null,
     institution,
-    date: parseDate(`${m[3]} at ${m[4]}`),
+    date: institution === "Co-op Bank" ? parseMdySlashDate(m[3], m[4]) : parseDate(`${m[3]} at ${m[4]}`),
     raw: text,
   };
 }
 
-const MATCHERS = [matchCardPurchase, matchBankToMpesaReceive, matchBankAppSend];
+const MATCHERS = [
+  matchCardPurchase,
+  matchBankToMpesaReceive,
+  matchImBankToMpesaReceive,
+  matchAbsaBankToMpesaReceive,
+  matchEquityTillPayment,
+  matchEquityBillPayment,
+  matchBankAppSend,
+];
 
 /**
  * Parse a bank-sourced transaction SMS, or `null` when the text matches none of

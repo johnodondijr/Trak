@@ -50,6 +50,10 @@ type PartialTxn = {
   account: string | null;
 };
 
+function isSafaricomAirtimeCounterparty(name: string | null): boolean {
+  return !!name && /\bsafaricom\b/i.test(name);
+}
+
 /** Money received from a person. */
 function matchReceive(raw: string): PartialTxn | null {
   const m = raw.match(
@@ -86,11 +90,21 @@ function matchPaybill(raw: string): PartialTxn | null {
     /Ksh?\s*([\d,]+(?:\.\d+)?)\s+sent to\s+(.+?)\s+for account\s+([^\s.]+)/i,
   );
   if (!m) return null;
+  const counterparty = cleanName(m[2]);
+  if (isSafaricomAirtimeCounterparty(counterparty)) {
+    return {
+      type: "airtime",
+      direction: "expense",
+      amount: parseAmount(m[1]),
+      counterparty,
+      account: m[3] ?? null,
+    };
+  }
   return {
     type: "paybill",
     direction: "expense",
     amount: parseAmount(m[1]),
-    counterparty: cleanName(m[2]),
+    counterparty,
     account: m[3] ?? null,
   };
 }
@@ -101,11 +115,21 @@ function matchSend(raw: string): PartialTxn | null {
     /Ksh?\s*([\d,]+(?:\.\d+)?)\s+sent to\s+(.+?)(?:\s+(\+?\d[\d\s]{6,14}\d))?\s+on\b/i,
   );
   if (!m) return null;
+  const counterparty = cleanName(m[2]);
+  if (isSafaricomAirtimeCounterparty(counterparty)) {
+    return {
+      type: "airtime",
+      direction: "expense",
+      amount: parseAmount(m[1]),
+      counterparty,
+      account: m[3] ? m[3].replace(/\s/g, "") : null,
+    };
+  }
   return {
     type: "send",
     direction: "expense",
     amount: parseAmount(m[1]),
-    counterparty: cleanName(m[2]),
+    counterparty,
     account: m[3] ? m[3].replace(/\s/g, "") : null,
   };
 }
@@ -117,11 +141,21 @@ function matchTill(raw: string): PartialTxn | null {
   );
   if (!m) return null;
   const isPaybill = !!m[3];
+  const counterparty = cleanName(m[2]);
+  if (isSafaricomAirtimeCounterparty(counterparty)) {
+    return {
+      type: "airtime",
+      direction: "expense",
+      amount: parseAmount(m[1]),
+      counterparty,
+      account: m[3] ?? null,
+    };
+  }
   return {
     type: isPaybill ? "paybill" : "till",
     direction: "expense",
     amount: parseAmount(m[1]),
-    counterparty: cleanName(m[2]),
+    counterparty,
     account: m[3] ?? null,
   };
 }

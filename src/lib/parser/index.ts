@@ -11,6 +11,7 @@ import { parseMpesa, isMpesa } from "./mpesa";
 import { parseAirtel, isAirtel } from "./airtel";
 import { parseBank } from "./bank";
 import { categorize } from "../categorize";
+import { dedupeTransactions } from "../transactionDedupe";
 
 export * from "./types";
 export { isMpesa } from "./mpesa";
@@ -98,7 +99,6 @@ export function parseMessages(input: string): ParseResult {
   const blocks = splitMessages(input);
   const transactions: Transaction[] = [];
   const unparsed: string[] = [];
-  const seenRefs = new Set<string>();
 
   for (const block of blocks) {
     const txn = parseMessage(block);
@@ -106,13 +106,10 @@ export function parseMessages(input: string): ParseResult {
       unparsed.push(block);
       continue;
     }
-    if (txn.ref && seenRefs.has(txn.ref)) continue;
-    if (txn.ref) seenRefs.add(txn.ref);
     transactions.push(txn);
   }
 
-  transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
-  return { transactions, unparsed };
+  return { transactions: dedupeTransactions(transactions), unparsed };
 }
 
 /**

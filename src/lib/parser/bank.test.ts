@@ -63,9 +63,63 @@ describe("bank-sourced messages", () => {
     expect(t!.category).toBe("income");
   });
 
+  it("parses an I&M bank-to-M-Pesa credit", () => {
+    const t = parseMessage(
+      "You have received KES 500.00 from DENNIS OCHIENG OLINGO. Transaction Ref ID: 888042528253. Mpesa Ref ID: TC357HWSFL. Bank to Mpesa Ni Sare Kabisa with I&M Bank.",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.provider).toBe("mpesa");
+    expect(t!.institution).toBe("I&M");
+    expect(t!.type).toBe("receive");
+    expect(t!.amount).toBe(500);
+    expect(t!.counterparty).toBe("DENNIS OCHIENG OLINGO");
+    expect(t!.ref).toBe("TC357HWSFL");
+  });
+
+  it("parses an Absa bank-to-M-Pesa credit", () => {
+    const t = parseMessage(
+      "DAVID ONGEI ODONDI has transferred KES2000 to your MPESA ref: TA46ZIZAEO. Please await MPESA notification.",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.provider).toBe("mpesa");
+    expect(t!.institution).toBe("Absa");
+    expect(t!.type).toBe("receive");
+    expect(t!.amount).toBe(2000);
+    expect(t!.ref).toBe("TA46ZIZAEO");
+  });
+
+  it("parses an Equity till confirmation as the same M-Pesa ref", () => {
+    const t = parseMessage(
+      "Confirmed. Payment of KES. 160.00 to ALISON HOSPITAL LIMITED Till No. 0710841341 has been received. Ref. SL4974PCHT on 04-12-2024 at 15:17. Thank you.",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.provider).toBe("mpesa");
+    expect(t!.institution).toBe("Equity");
+    expect(t!.type).toBe("till");
+    expect(t!.amount).toBe(160);
+    expect(t!.counterparty).toBe("ALISON HOSPITAL LIMITED");
+    expect(t!.account).toBe("0710841341");
+    expect(t!.ref).toBe("SL4974PCHT");
+    expect(t!.date.getMonth()).toBe(11); // December
+  });
+
+  it("parses an Equity bill confirmation as the same M-Pesa ref", () => {
+    const t = parseMessage(
+      "Confirmed, Bill payment to 4TH MUKEU COURT of KES. 1,200.00 for account 481362 570_2 and Ref. TGF731RHIV on 15-07-2025 at 13:07.Thank you.",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.provider).toBe("mpesa");
+    expect(t!.institution).toBe("Equity");
+    expect(t!.type).toBe("paybill");
+    expect(t!.amount).toBe(1200);
+    expect(t!.counterparty).toBe("4TH MUKEU COURT");
+    expect(t!.account).toBe("481362 570_2");
+    expect(t!.ref).toBe("TGF731RHIV");
+  });
+
   it("parses an MCoopCash app send (Co-op Bank)", () => {
     const t = parseMessage(
-      "Dear JANE DOE, you have sent Ksh. 16080.0 to DANIEL CHUMA 01116******500 \n on 07/11/2026 at 15:19:25. MPESA Ref. UGB1234567. Pay bills on MCoopCash App or Dial *667#.",
+      "Dear JANE DOE, you have sent Ksh. 16080.0 to DANIEL CHUMA 01116******500 \n on 11/07/2026 at 15:19:25. MPESA Ref. UGB1234567. Pay bills on MCoopCash App or Dial *667#.",
     );
     expect(t).not.toBeNull();
     expect(t!.type).toBe("send");
@@ -74,7 +128,7 @@ describe("bank-sourced messages", () => {
     expect(t!.counterparty).toBe("DANIEL CHUMA");
     expect(t!.ref).toBe("UGB1234567");
     expect(t!.institution).toBe("Co-op Bank");
-    expect(t!.date.getMonth()).toBe(10); // November (DD/MM/YYYY)
+    expect(t!.date.getMonth()).toBe(10); // November (MCoopCash uses MM/DD/YYYY)
     expect(t!.date.getDate()).toBe(7);
   });
 

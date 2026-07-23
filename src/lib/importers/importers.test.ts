@@ -36,6 +36,19 @@ describe("SMS Backup & Restore XML import", () => {
     const airtel = res.transactions.find((t) => t.ref === "PP7788AA")!;
     expect(airtel.provider).toBe("airtel");
   });
+
+  it("collapses bank confirmations onto the matching M-Pesa transaction", () => {
+    const paired = `<?xml version="1.0" encoding="UTF-8"?>
+<smses count="2">
+  <sms protocol="0" address="Equity Bank" date="1733081556043" type="1" body="BRIAN ODIWUOR OLINGO has sent KShs. 7500.0 to your MPESA. The MPESA receipt number is  SL15V2IAC7 and transaction reference is  EQA9DAFD0E63D56." read="1" />
+  <sms protocol="0" address="MPESA" date="1733081553860" type="1" body="SL15V2IAC7 Confirmed.You have received Ksh7,500.00 from Equity Bulk Account 300600 on 1/12/24 at 10:32 PM New M-PESA balance is Ksh7,578.38." read="1" />
+</smses>`;
+    const res = importContent(paired, "backup.xml");
+    expect(res.transactions).toHaveLength(1);
+    expect(res.transactions[0].ref).toBe("SL15V2IAC7");
+    expect(res.transactions[0].balance).toBe(7578.38);
+    expect(res.transactions[0].raw).toContain("Confirmed.You have received");
+  });
 });
 
 describe("delimited parsing", () => {

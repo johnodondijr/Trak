@@ -89,6 +89,17 @@ describe("M-Pesa parsing", () => {
     expect(t!.category).toBe("airtime");
   });
 
+  it("treats money sent to Safaricom services as airtime/data spend", () => {
+    const t = parseMessage(
+      "SK70WGPU5M Confirmed. Ksh35.00 sent to SAFARICOM DATA BUNDLES for account SAFARICOM DATA BUNDLES on 7/11/24 at 12:58 PM. New M-PESA balance is Ksh70.02. Transaction cost, Ksh0.00.",
+    );
+    expect(t).not.toBeNull();
+    expect(t!.type).toBe("airtime");
+    expect(t!.amount).toBe(35);
+    expect(t!.counterparty).toBe("SAFARICOM DATA BUNDLES");
+    expect(t!.category).toBe("airtime");
+  });
+
   it("parses a withdrawal", () => {
     const t = parseMessage(
       "TFA7H8I9J0 Confirmed. On 7/7/26 at 6:00 PM Withdraw Ksh3,000.00 from 456789 - QUICKCASH AGENCY. New M-PESA balance is Ksh5,430.00. Transaction cost, Ksh28.00.",
@@ -170,6 +181,19 @@ You have received Ksh1,200.00 from GRACE ADHIAMBO 0731222333. Your new balance i
     const { transactions, unparsed } = parseMessages(input);
     expect(transactions).toHaveLength(2); // duplicate collapsed
     expect(unparsed).toHaveLength(0);
+  });
+
+  it("keeps the official M-Pesa SMS when a bank confirmation shares the same ref", () => {
+    const input = `
+BRIAN ODIWUOR OLINGO has sent KShs. 7500.0 to your MPESA. The MPESA receipt number is  SL15V2IAC7 and transaction reference is  EQA9DAFD0E63D56.
+
+SL15V2IAC7 Confirmed.You have received Ksh7,500.00 from Equity Bulk Account 300600 on 1/12/24 at 10:32 PM New M-PESA balance is Ksh7,578.38.
+`;
+    const { transactions } = parseMessages(input);
+    expect(transactions).toHaveLength(1);
+    expect(transactions[0].ref).toBe("SL15V2IAC7");
+    expect(transactions[0].balance).toBe(7578.38);
+    expect(transactions[0].counterparty).toBe("Equity Bulk Account");
   });
 
   it("collects unparsed lines instead of dropping them silently", () => {

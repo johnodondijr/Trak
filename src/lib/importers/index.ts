@@ -12,6 +12,7 @@ import { parseMessages, parseSms } from "../parser/index";
 import { isSmsBackupXml, parseSmsBackup } from "./smsBackup";
 import { parseDelimited, type DelimitedTable } from "./delimited";
 import { isStatementTable, parseStatement } from "./statement";
+import { dedupeTransactions } from "../transactionDedupe";
 
 export type ImportSource = "sms-backup" | "statement" | "sms-csv" | "text";
 
@@ -132,14 +133,5 @@ function isProbablyDelimited(content: string): boolean {
 
 /** Collapse duplicate transactions by ref (then by raw text) within an import. */
 function dedupe(result: ImportResult): ImportResult {
-  const seenKeys = new Set<string>();
-  const unique: Transaction[] = [];
-  for (const t of result.transactions) {
-    const key = t.ref ? `ref:${t.ref}` : `raw:${t.raw}|${t.date.getTime()}`;
-    if (seenKeys.has(key)) continue;
-    seenKeys.add(key);
-    unique.push(t);
-  }
-  unique.sort((a, b) => b.date.getTime() - a.date.getTime());
-  return { ...result, transactions: unique };
+  return { ...result, transactions: dedupeTransactions(result.transactions) };
 }

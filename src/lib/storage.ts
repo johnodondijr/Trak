@@ -7,6 +7,7 @@
  * (converting the ISO date string back into a `Date`).
  */
 import type { Transaction } from "./parser/types";
+import { mergeTransactionSets } from "./transactionDedupe";
 
 const STORAGE_KEY = "trak.transactions.v1";
 
@@ -69,9 +70,5 @@ export function mergeTransactions(
   existing: Transaction[],
   incoming: Transaction[],
 ): Transaction[] {
-  const byKey = new Map<string, Transaction>();
-  const keyOf = (t: Transaction) => (t.ref ? `ref:${t.ref}` : `raw:${t.raw}`);
-  for (const t of existing) byKey.set(keyOf(t), t);
-  for (const t of incoming) byKey.set(keyOf(t), t);
-  return [...byKey.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
+  return mergeTransactionSets(existing, incoming);
 }
