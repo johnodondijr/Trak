@@ -405,21 +405,21 @@ button {
   opacity: 0.9;
 }
 .hero-amount {
-  font-size: 48px;
+  font-size: 72px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 0.96;
   display: flex;
   align-items: center;
-  min-height: 58px;
+  min-height: 76px;
 }
 .hero-amount .cur {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   opacity: 0.6;
-  margin-right: 7px;
+  margin-right: 8px;
   align-self: flex-start;
-  margin-top: 9px;
+  margin-top: 13px;
 }
 .hero-eye {
   border: none;
