@@ -489,7 +489,7 @@ button {
   background: #ffffff;
 }
 
-/* white "+ Import" CTA under the card (FastPay "+ Add Card") */
+/* white import CTA under the wallet card */
 .add-cta {
   width: calc(100% - 6px);
   margin: 0 3px;
@@ -627,13 +627,16 @@ button {
   grid-template-columns: repeat(3, 1fr);
   gap: 9px;
   margin-top: 12px;
+  align-items: start;
 }
 .mini {
   background: transparent;
   border: 0;
   border-radius: 0;
-  padding: 10px 2px;
+  padding: 10px 2px 8px;
   box-shadow: none;
+  min-width: 0;
+  text-align: center;
 }
 .mini-chip {
   width: 30px;
@@ -641,17 +644,21 @@ button {
   border-radius: 9px;
   display: inline-grid;
   place-items: center;
-  margin-bottom: 9px;
+  margin: 0 auto 8px;
 }
 .mini .lbl {
   font-size: 10.5px;
   color: var(--text-secondary);
   margin-bottom: 3px;
+  white-space: nowrap;
 }
 .mini .val {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* icon chip inside a category bar label */

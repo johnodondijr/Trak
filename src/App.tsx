@@ -51,9 +51,9 @@ import {
   IconChevronRight,
   IconTransfer,
   IconPie,
+  IconUsers,
   IconPercent,
   IconArrowLeft,
-  IconScan,
 } from "./components/icons";
 
 type Range = "today" | "week" | "month" | "all";
@@ -227,41 +227,35 @@ export default function App() {
                 />
 
                 <button className="add-cta" onClick={() => setImporting(true)}>
-                  <IconPlus size={17} /> Add Card
+                  <IconPlus size={17} /> Import messages
                 </button>
 
                 <div className="quick">
-                  <button onClick={() => seeAllInActivity({ category: "deposit" })}>
-                    <span className="q-circle">
-                      <IconArrowDownLeft size={20} />
-                    </span>
-                    Deposit
-                  </button>
-                  <button onClick={() => seeAllInActivity({ category: "withdrawal" })}>
-                    <span className="q-circle">
-                      <IconArrowUp size={19} />
-                    </span>
-                    Withdraw
-                  </button>
-                  <button onClick={() => seeAllInActivity({ category: "transfers" })}>
-                    <span className="q-circle">
-                      <IconTransfer size={20} />
-                    </span>
-                    Send
-                  </button>
                   <button onClick={() => setFocus("categories")}>
                     <span className="q-circle">
                       <IconPie size={20} />
                     </span>
-                    Other
+                    Categories
+                  </button>
+                  <button onClick={() => setFocus("recipients")}>
+                    <span className="q-circle">
+                      <IconUsers size={20} />
+                    </span>
+                    Recipients
+                  </button>
+                  <button onClick={() => setFocus("charges")}>
+                    <span className="q-circle">
+                      <IconPercent size={20} />
+                    </span>
+                    Charges
+                  </button>
+                  <button onClick={() => setFocus("insights")}>
+                    <span className="q-circle">
+                      <IconBulb size={20} />
+                    </span>
+                    Insights
                   </button>
                 </div>
-
-                <RecentPreview
-                  transactions={transactions}
-                  onSeeAll={() => seeAllInActivity({})}
-                  onOpenTxn={setDetailTxn}
-                />
 
                 <div className="section summary-strip" style={{ marginTop: 16 }}>
                   <div className="segmented" role="group" aria-label="Period">
@@ -294,6 +288,12 @@ export default function App() {
                     />
                   </div>
                 </div>
+
+                <RecentPreview
+                  transactions={transactions}
+                  onSeeAll={() => seeAllInActivity({})}
+                  onOpenTxn={setDetailTxn}
+                />
 
                 <section className="section flat-section">
                   <div className="section-head">
@@ -342,7 +342,7 @@ export default function App() {
                     <h2>Where your money goes</h2>
                     <span className="sub">all time</span>
                   </div>
-                  <div className="card">
+                  <div className="flat-panel">
                     <CategoryDonut data={allCategories} />
                   </div>
                 </section>
@@ -351,7 +351,7 @@ export default function App() {
                     <h2>Top recipients</h2>
                     <span className="sub">all time</span>
                   </div>
-                  <div className="card">
+                  <div className="flat-panel">
                     <TopRecipients
                       data={allRecipients}
                       transactions={transactions}
@@ -406,7 +406,7 @@ export default function App() {
           </button>
           <button className="primary" onClick={() => setImporting(true)} aria-label="Import">
             <span className="tico">
-              <IconScan size={25} />
+              <IconPlus size={25} />
             </span>
           </button>
           <button aria-current={!focus && tab === "trends"} onClick={() => openTab("trends")}>
@@ -527,7 +527,7 @@ function FocusView({
 
       {focus === "categories" && (
         <>
-          <div className="card">
+          <div className="flat-panel">
             <CategoryDonut data={allCategories} />
           </div>
           <div className="section-head" style={{ marginTop: 18 }}>

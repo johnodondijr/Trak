@@ -1,6 +1,6 @@
 import type { CategoryTotal } from "../lib/analytics";
 import type { Category } from "../lib/parser/types";
-import { categoryColor, categoryLabel, kes } from "../lib/format";
+import { categoryColor, categoryLabel } from "../lib/format";
 
 const MAX_SLICES = 6;
 
@@ -16,6 +16,7 @@ export function CategoryDonut({ data }: { data: CategoryTotal[] }) {
   }
 
   const total = data.reduce((s, d) => s + d.total, 0);
+  const totalAmount = Math.round(total).toLocaleString("en-KE");
   const top = data.slice(0, MAX_SLICES);
   const restTotal = data.slice(MAX_SLICES).reduce((s, d) => s + d.total, 0);
   const slices: { key: string; label: string; color: string; value: number; share: number }[] = top.map(
@@ -67,11 +68,23 @@ export function CategoryDonut({ data }: { data: CategoryTotal[] }) {
             acc += len;
             return el;
           })}
-          <text x="90" y="84" textAnchor="middle" fontSize="12" fill="var(--muted)">
+          <text x="90" y="79" textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--muted)">
             Spent
           </text>
-          <text x="90" y="104" textAnchor="middle" fontSize="19" fontWeight="800" fill="var(--text-primary)">
-            {kes(total)}
+          <text x="90" y="96" textAnchor="middle" fontSize="9" fontWeight="800" fill="var(--text-primary)">
+            KES
+          </text>
+          <text
+            x="90"
+            y="114"
+            textAnchor="middle"
+            fontSize="16"
+            fontWeight="800"
+            fill="var(--text-primary)"
+            textLength="74"
+            lengthAdjust="spacingAndGlyphs"
+          >
+            {totalAmount}
           </text>
         </svg>
       </div>
