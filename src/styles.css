@@ -1266,7 +1266,19 @@ button {
   padding: 9px 12px calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 40;
 }
+.tabbar::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  bottom: -56px;
+  height: 56px;
+  background: #17171b;
+  pointer-events: none;
+}
 .tabbar button {
+  position: relative;
+  z-index: 1;
   background: none;
   border: none;
   display: flex;
