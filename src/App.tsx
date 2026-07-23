@@ -5,8 +5,6 @@ import {
   byCategory,
   insights,
   latestBalance,
-  monthlyTrend,
-  monthOverMonth,
   summarize,
   topCounterparties,
   totals,
@@ -19,6 +17,7 @@ import {
 } from "./lib/storage";
 import { SAMPLE_MESSAGES } from "./data/sampleMessages";
 import { hasSample, stripSample } from "./lib/sample";
+import { bankOnlyTransactions, walletTransactions } from "./lib/transactionScopes";
 import { kes, greeting, typeLabel, formatDate } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
@@ -71,7 +70,7 @@ const RANGE_PHRASE: Record<Range, string> = {
 };
 
 type Tab = "overview" | "activity" | "trends" | "more";
-type FocusPage = "insights" | "categories" | "recipients" | "charges";
+type FocusPage = "insights" | "categories" | "recipients" | "charges" | "bank";
 type Theme = "light" | "dark";
 const LAST_READ_AT_KEY = "trak.lastReadAt";
 
@@ -104,21 +103,21 @@ export default function App() {
   }, [theme]);
 
   const now = useMemo(() => new Date(), []);
-  const summary = useMemo(() => summarize(transactions, now), [transactions, now]);
-  const inRange = useMemo(() => filterByRange(transactions, range, now), [transactions, range, now]);
+  const walletTxns = useMemo(() => walletTransactions(transactions), [transactions]);
+  const bankTxns = useMemo(() => bankOnlyTransactions(transactions), [transactions]);
+  const summary = useMemo(() => summarize(walletTxns, now), [walletTxns, now]);
+  const inRange = useMemo(() => filterByRange(walletTxns, range, now), [walletTxns, range, now]);
   const rangeTotals = useMemo(
     () => (range === "all" ? summary.all : totals(inRange)),
     [range, summary, inRange],
   );
   const categories = useMemo(() => byCategory(inRange), [inRange]);
-  const trend = useMemo(() => monthlyTrend(transactions), [transactions]);
-  const mom = useMemo(() => monthOverMonth(transactions, now), [transactions, now]);
-  const tips = useMemo(() => insights(transactions, now), [transactions, now]);
-  const balance = useMemo(() => latestBalance(transactions), [transactions]);
+  const tips = useMemo(() => insights(walletTxns, now), [walletTxns, now]);
+  const balance = useMemo(() => latestBalance(walletTxns), [walletTxns]);
   // Memoized so switching to the Trends tab doesn't recompute on every render.
-  const allCategories = useMemo(() => byCategory(transactions), [transactions]);
-  const allRecipients = useMemo(() => topCounterparties(transactions, 6), [transactions]);
-  const readAsOf = useMemo(() => lastReadAt ?? transactions[0]?.date ?? null, [lastReadAt, transactions]);
+  const allCategories = useMemo(() => byCategory(walletTxns), [walletTxns]);
+  const allRecipients = useMemo(() => topCounterparties(walletTxns, 6), [walletTxns]);
+  const readAsOf = useMemo(() => lastReadAt ?? walletTxns[0]?.date ?? null, [lastReadAt, walletTxns]);
   const displayName = useMemo(() => loggedInName(), []);
   const headerTitle =
     tab === "more"
@@ -222,7 +221,8 @@ export default function App() {
             {focus && (
               <FocusView
                 focus={focus}
-                transactions={transactions}
+                transactions={walletTxns}
+                bankTransactions={bankTxns}
                 allCategories={allCategories}
                 tips={tips}
                 onBack={() => setFocus(null)}
@@ -302,7 +302,7 @@ export default function App() {
                 </div>
 
                 <RecentPreview
-                  transactions={transactions}
+                  transactions={walletTxns}
                   onSeeAll={() => seeAllInActivity({})}
                   onOpenTxn={setDetailTxn}
                 />
@@ -326,10 +326,10 @@ export default function App() {
               <section className="section" style={{ marginTop: 4 }}>
                 <div className="section-head">
                   <h2>Transactions</h2>
-                  <span className="sub">{transactions.length} total</span>
+                  <span className="sub">{walletTxns.length} total</span>
                 </div>
                 <TransactionList
-                  transactions={transactions}
+                  transactions={walletTxns}
                   now={now}
                   onOpenTxn={setDetailTxn}
                   presetQuery={activityPreset.query}
@@ -344,9 +344,8 @@ export default function App() {
                   <h2>Statistics</h2>
                 </div>
                 <StatsScreen
-                  transactions={transactions}
-                  trend={trend}
-                  mom={mom}
+                  transactions={walletTxns}
+                  now={now}
                   onOpenTxn={setDetailTxn}
                 />
                 <section className="section">
@@ -366,7 +365,7 @@ export default function App() {
                   <div className="flat-panel">
                     <TopRecipients
                       data={allRecipients}
-                      transactions={transactions}
+                      transactions={walletTxns}
                       onOpenTxn={setDetailTxn}
                       onSeeAll={(name) => seeAllInActivity({ query: name })}
                     />
@@ -379,7 +378,7 @@ export default function App() {
                   <div className="flat-panel">
                     <CategoryBreakdown
                       data={allCategories}
-                      transactions={transactions}
+                      transactions={walletTxns}
                       onOpenTxn={setDetailTxn}
                       onSeeAll={(c) => seeAllInActivity({ category: c })}
                     />
@@ -391,10 +390,12 @@ export default function App() {
             {tab === "more" && (
               <MoreScreen
                 count={transactions.length}
+                bankCount={bankTxns.length}
                 theme={theme}
                 onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
                 onImport={() => setImporting(true)}
                 onSample={loadSample}
+                onBankTransactions={() => setFocus("bank")}
                 onClear={handleClear}
               />
             )}
@@ -502,11 +503,13 @@ const FOCUS_TITLES: Record<FocusPage, string> = {
   categories: "Spending by category",
   recipients: "Top recipients",
   charges: "Transaction charges",
+  bank: "Bank transactions",
 };
 
 function FocusView({
   focus,
   transactions,
+  bankTransactions,
   allCategories,
   tips,
   onBack,
@@ -516,6 +519,7 @@ function FocusView({
 }: {
   focus: FocusPage;
   transactions: Transaction[];
+  bankTransactions: Transaction[];
   allCategories: ReturnType<typeof byCategory>;
   tips: ReturnType<typeof insights>;
   onBack: () => void;
@@ -570,7 +574,55 @@ function FocusView({
       )}
 
       {focus === "charges" && <ChargesView transactions={transactions} onOpenTxn={onOpenTxn} />}
+      {focus === "bank" && <BankTransactionsView transactions={bankTransactions} onOpenTxn={onOpenTxn} />}
     </div>
+  );
+}
+
+function BankTransactionsView({
+  transactions,
+  onOpenTxn,
+}: {
+  transactions: Transaction[];
+  onOpenTxn: (t: Transaction) => void;
+}) {
+  const total = transactions.reduce((s, t) => s + (t.direction === "expense" ? t.amount : 0), 0);
+  return (
+    <>
+      <div className="charges-hero">
+        <div className="charges-label">Bank-only spending</div>
+        <div className="charges-total">{kes(total)}</div>
+        <div className="charges-sub">
+          {transactions.length} bank {transactions.length === 1 ? "transaction" : "transactions"} outside M-PESA
+        </div>
+      </div>
+      <div className="flat-panel">
+        {transactions.length === 0 ? (
+          <div className="tx-empty">No bank-only transactions yet.</div>
+        ) : (
+          transactions.map((t) => <TxnBankRow key={t.ref || t.raw} txn={t} onClick={onOpenTxn} />)
+        )}
+      </div>
+    </>
+  );
+}
+
+function TxnBankRow({ txn, onClick }: { txn: Transaction; onClick: (t: Transaction) => void }) {
+  return (
+    <button type="button" className="tx tx-btn" onClick={() => onClick(txn)}>
+      <span className="tx-arrow tx-bank-icon" aria-hidden>
+        <IconShield size={18} />
+      </span>
+      <div className="tx-main">
+        <div className="tx-title">{txn.counterparty ?? txn.institution ?? "Bank transaction"}</div>
+        <div className="tx-meta">
+          <span>{txn.institution ?? "Bank"}</span>
+          <span>Â·</span>
+          <span>{formatDate(txn.date)}</span>
+        </div>
+      </div>
+      <div className="tx-amount">{txn.direction === "income" ? "+" : "-"}{kes(txn.amount)}</div>
+    </button>
   );
 }
 
@@ -641,17 +693,21 @@ function ChargesView({
 
 function MoreScreen({
   count,
+  bankCount,
   theme,
   onToggleTheme,
   onImport,
   onSample,
+  onBankTransactions,
   onClear,
 }: {
   count: number;
+  bankCount: number;
   theme: Theme;
   onToggleTheme: () => void;
   onImport: () => void;
   onSample: () => void;
+  onBankTransactions: () => void;
   onClear: () => void;
 }) {
   return (
@@ -675,6 +731,16 @@ function MoreScreen({
           </span>
         </button>
         <InstallButton variant="row" />
+        <button className="more-row" onClick={onBankTransactions}>
+          <span className="more-ico">
+            <IconShield size={19} />
+          </span>
+          <span className="more-label">
+            Bank transactions
+            <small>{bankCount} outside M-PESA balance</small>
+          </span>
+          <IconChevronRight size={18} />
+        </button>
         <button className="more-row" onClick={onImport}>
           <span className="more-ico">
             <IconPlus size={19} />

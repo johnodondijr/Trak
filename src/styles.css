@@ -823,6 +823,10 @@ button {
   color: var(--muted);
   font-weight: 500;
 }
+.tx-bank-icon {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
 
 /* ---- Statistics screen ---- */
 .stats-head {
@@ -878,6 +882,40 @@ button {
 .stats-toggle button[aria-pressed="true"] {
   background: var(--ink-btn);
   color: var(--surface-1);
+}
+.stats-period {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.stats-period button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 9px 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.stats-period button[aria-pressed="true"] {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: #16161a;
+}
+.stats-select-row {
+  margin: -2px 0 14px;
+}
+.stats-select-row select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
 }
 .analytics-card {
   background: #17171b;
