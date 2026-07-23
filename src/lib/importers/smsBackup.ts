@@ -50,6 +50,7 @@ export function parseSmsBackup(content: string): RawSms[] {
       body: decodeEntities(body),
       address: el.getAttribute("address"),
       date: epochToDate(el.getAttribute("date")),
+      subId: cleanSubId(el.getAttribute("sub_id")),
     });
   }
   return out;
@@ -68,6 +69,7 @@ function scanSmsElements(content: string): RawSms[] {
       body: decodeEntities(body),
       address: attr(tag, "address"),
       date: epochToDate(attr(tag, "date")),
+      subId: cleanSubId(attr(tag, "sub_id")),
     });
   }
   return out;
@@ -84,6 +86,11 @@ function epochToDate(value: string | null): Date | null {
   if (!Number.isFinite(ms) || ms <= 0) return null;
   const d = new Date(ms);
   return isNaN(d.getTime()) ? null : d;
+}
+
+function cleanSubId(value: string | null): string | null {
+  if (!value || value === "-1") return null;
+  return value;
 }
 
 /** Decode the handful of XML entities that appear in SMS bodies. */

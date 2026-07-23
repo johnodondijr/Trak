@@ -237,6 +237,18 @@ SL15V2IAC7 Confirmed.You have received Ksh7,500.00 from Equity Bulk Account 3006
     expect(transactions[0].counterparty).toBe("Equity Bulk Account");
   });
 
+  it("keeps Fuliza companion messages that share a payment ref", () => {
+    const input = `
+UGN9S08YSE Confirmed. Ksh70.00 sent to GREGORY  NDUKU 0792221960 on 23/7/26 at 12:34 PM. New M-PESA balance is Ksh0.00. Transaction cost, Ksh0.00.
+
+UGN9S08YSE Confirmed. Fuliza M-PESA amount is Ksh 70.00. Access Fee charged Ksh 0.70. Total Fuliza M-PESA outstanding amount is Ksh771.60 due on 21/08/26.
+`;
+    const { transactions } = parseMessages(input);
+    expect(transactions).toHaveLength(2);
+    expect(transactions.some((t) => t.type === "send")).toBe(true);
+    expect(transactions.some((t) => t.type === "fuliza")).toBe(true);
+  });
+
   it("collects unparsed lines instead of dropping them silently", () => {
     const { transactions, unparsed } = parseMessages(
       "This is just a normal text message from a friend.",

@@ -20,6 +20,16 @@ describe("SMS Backup & Restore XML import", () => {
     expect(records[0].date?.getTime()).toBe(1751525520000);
   });
 
+  it("preserves Android subscription ids as line ids", () => {
+    const lineXml = `<?xml version="1.0" encoding="UTF-8"?>
+<smses count="1">
+  <sms protocol="0" address="MPESA" date="1784799302447" type="1" sub_id="7" body="UGNQ6066O1 Confirmed. Ksh60.00 sent to PHARIS GITAU on 23/7/26 at 8:14 AM. New M-PESA balance is Ksh52.66. Transaction cost, Ksh0.00." read="1" />
+</smses>`;
+    const res = importContent(lineXml, "backup.xml");
+    expect(res.transactions).toHaveLength(1);
+    expect(res.transactions[0].lineId).toBe("sub:7");
+  });
+
   it("imports only recognized mobile-money transactions and skips promos", () => {
     const res = importContent(xml, "sms-20260703.xml");
     expect(res.source).toBe("sms-backup");

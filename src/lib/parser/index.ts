@@ -56,6 +56,7 @@ export interface RawSms {
   address?: string | null;
   /** When the SMS was received — authoritative, unlike the in-text date. */
   date?: Date | null;
+  subId?: string | null;
 }
 
 /** Map an SMS sender address to a provider, or null when it isn't one we track. */
@@ -79,6 +80,7 @@ export function parseSms(sms: RawSms): Transaction | null {
   if (sms.date && !isNaN(sms.date.getTime())) {
     txn.date = sms.date;
   }
+  if (sms.subId) txn.lineId = `sub:${sms.subId}`;
   return txn;
 }
 

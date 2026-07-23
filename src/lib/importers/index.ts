@@ -92,6 +92,7 @@ function importTable(table: DelimitedTable): ImportResult {
   );
   const addrIdx = table.header.findIndex((h) => /address|sender|from/i.test(h));
   const dateIdx = table.header.findIndex((h) => /date|time/i.test(h));
+  const subIdx = table.header.findIndex((h) => /sub_?id|subscription|sim/i.test(h));
 
   const transactions: Transaction[] = [];
   let skipped = 0;
@@ -103,7 +104,12 @@ function importTable(table: DelimitedTable): ImportResult {
     }
     const address = addrIdx >= 0 ? row[addrIdx] : null;
     const rawDate = dateIdx >= 0 ? row[dateIdx] : "";
-    const txn = parseSms({ body, address, date: parseFlexibleDate(rawDate) });
+    const txn = parseSms({
+      body,
+      address,
+      date: parseFlexibleDate(rawDate),
+      subId: subIdx >= 0 ? row[subIdx] : null,
+    });
     if (txn) transactions.push(txn);
     else skipped++;
   }

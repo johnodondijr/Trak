@@ -12,7 +12,10 @@ function preference(t: Transaction): number {
 }
 
 function keyOf(t: Transaction): string {
-  return t.ref ? `ref:${t.ref}` : `raw:${t.raw}|${t.date.getTime()}`;
+  if (!t.ref) return `raw:${t.raw}|${t.date.getTime()}`;
+  if (t.type === "fuliza") return `ref:${t.ref}:fuliza:${t.direction}:${t.amount}`;
+  if (t.type === "balance" || t.type === "failed") return `ref:${t.ref}:${t.type}`;
+  return `ref:${t.ref}:movement`;
 }
 
 function pickPreferred(existing: Transaction, incoming: Transaction): Transaction {

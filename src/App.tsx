@@ -17,7 +17,11 @@ import {
 } from "./lib/storage";
 import { SAMPLE_MESSAGES } from "./data/sampleMessages";
 import { hasSample, stripSample } from "./lib/sample";
-import { bankOnlyTransactions, walletTransactions } from "./lib/transactionScopes";
+import {
+  bankOnlyTransactions,
+  transactionsForLine,
+  walletLineOptions,
+} from "./lib/transactionScopes";
 import { kes, greeting, typeLabel, formatDate } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
 import { TopRecipients } from "./components/TopRecipients";
@@ -89,6 +93,7 @@ export default function App() {
     () => (localStorage.getItem("trak.theme") as Theme) || "light",
   );
   const [hideBalance, setHideBalance] = useState(false);
+  const [selectedLine, setSelectedLine] = useState<"all" | string>("all");
   const [lastReadAt, setLastReadAt] = useState<Date | null>(() => {
     const raw = localStorage.getItem(LAST_READ_AT_KEY);
     if (!raw) return null;
@@ -103,7 +108,11 @@ export default function App() {
   }, [theme]);
 
   const now = useMemo(() => new Date(), []);
-  const walletTxns = useMemo(() => walletTransactions(transactions), [transactions]);
+  const lineOptions = useMemo(() => walletLineOptions(transactions), [transactions]);
+  const activeLine = selectedLine === "all" || lineOptions.some((l) => l.id === selectedLine)
+    ? selectedLine
+    : "all";
+  const walletTxns = useMemo(() => transactionsForLine(transactions, activeLine), [transactions, activeLine]);
   const bankTxns = useMemo(() => bankOnlyTransactions(transactions), [transactions]);
   const summary = useMemo(() => summarize(walletTxns, now), [walletTxns, now]);
   const inRange = useMemo(() => filterByRange(walletTxns, range, now), [walletTxns, range, now]);
@@ -233,6 +242,13 @@ export default function App() {
             )}
             {!focus && tab === "overview" && (
               <>
+                {lineOptions.length > 1 && (
+                  <LineSelector
+                    lines={lineOptions}
+                    selected={activeLine}
+                    onSelect={setSelectedLine}
+                  />
+                )}
                 <HeroCard
                   balance={balance}
                   rangeNet={rangeTotals.net}
@@ -439,6 +455,30 @@ export default function App() {
 
       {importing && <ImportModal onClose={() => setImporting(false)} onImport={handleImport} />}
       {detailTxn && <TransactionDetail txn={detailTxn} onClose={() => setDetailTxn(null)} />}
+    </div>
+  );
+}
+
+function LineSelector({
+  lines,
+  selected,
+  onSelect,
+}: {
+  lines: ReturnType<typeof walletLineOptions>;
+  selected: "all" | string;
+  onSelect: (id: "all" | string) => void;
+}) {
+  const total = lines.reduce((sum, line) => sum + line.count, 0);
+  return (
+    <div className="line-selector" role="group" aria-label="M-PESA line">
+      <button aria-pressed={selected === "all"} onClick={() => onSelect("all")}>
+        All <span>{total}</span>
+      </button>
+      {lines.map((line) => (
+        <button key={line.id} aria-pressed={selected === line.id} onClick={() => onSelect(line.id)}>
+          {line.label} <span>{line.count}</span>
+        </button>
+      ))}
     </div>
   );
 }

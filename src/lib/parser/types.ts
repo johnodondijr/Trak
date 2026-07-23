@@ -72,6 +72,8 @@ export interface Transaction {
   account: string | null;
   /** Originating institution for bank-sourced messages, e.g. "I&M", "Equity". */
   institution?: string | null;
+  /** Android SIM/subscription id from SMS backups, used to separate duplicate M-Pesa lines. */
+  lineId?: string | null;
   /** When the transaction happened (parsed from the message). */
   date: Date;
   /** Spending category assigned by the categorizer. */

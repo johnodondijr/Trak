@@ -25,7 +25,7 @@ export function loadTransactions(): Transaction[] {
         const date = new Date(t.date);
         if (isNaN(date.getTime())) return null;
         const reparsed = t.raw ? parseMessage(t.raw) : null;
-        return reparsed ? { ...reparsed, date } : { ...t, date };
+        return reparsed ? { ...reparsed, date, lineId: t.lineId ?? reparsed.lineId } : { ...t, date };
       })
       .filter((t): t is Transaction => t !== null);
     return dedupeTransactions(rehydrated);
