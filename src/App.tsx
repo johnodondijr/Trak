@@ -51,9 +51,9 @@ import {
   IconChevronRight,
   IconTransfer,
   IconPie,
-  IconUsers,
   IconPercent,
   IconArrowLeft,
+  IconScan,
 } from "./components/icons";
 
 type Range = "today" | "week" | "month" | "all";
@@ -113,7 +113,15 @@ export default function App() {
   const allRecipients = useMemo(() => topCounterparties(transactions, 6), [transactions]);
   const displayName = useMemo(() => loggedInName(), []);
   const headerTitle =
-    tab === "more" ? "Account" : tab === "trends" ? "Statistics" : tab === "activity" ? "Transactions" : "Your money";
+    tab === "more"
+      ? "Account"
+      : tab === "trends"
+        ? "Statistics"
+        : tab === "activity"
+          ? "Transactions"
+          : displayName === "there"
+            ? "Trak"
+            : displayName;
 
   function revealImported(merged: Transaction[]) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -162,7 +170,7 @@ export default function App() {
       {!hasData ? (
         <EmptyLanding onImport={() => setImporting(true)} onSample={loadSample} />
       ) : (
-        <div className="screen">
+        <div className={`screen ${!focus && tab === "overview" ? "overview-screen" : ""}`}>
         <header className="app-header">
           <div className="hi">
             <div className="hi-logo">
@@ -219,37 +227,43 @@ export default function App() {
                 />
 
                 <button className="add-cta" onClick={() => setImporting(true)}>
-                  <IconPlus size={18} /> Import messages
+                  <IconPlus size={17} /> Add Card
                 </button>
 
                 <div className="quick">
+                  <button onClick={() => seeAllInActivity({ category: "deposit" })}>
+                    <span className="q-circle">
+                      <IconArrowDownLeft size={20} />
+                    </span>
+                    Deposit
+                  </button>
+                  <button onClick={() => seeAllInActivity({ category: "withdrawal" })}>
+                    <span className="q-circle">
+                      <IconArrowUp size={19} />
+                    </span>
+                    Withdraw
+                  </button>
+                  <button onClick={() => seeAllInActivity({ category: "transfers" })}>
+                    <span className="q-circle">
+                      <IconTransfer size={20} />
+                    </span>
+                    Send
+                  </button>
                   <button onClick={() => setFocus("categories")}>
                     <span className="q-circle">
-                      <IconPie size={21} />
+                      <IconPie size={20} />
                     </span>
-                    Categories
-                  </button>
-                  <button onClick={() => setFocus("recipients")}>
-                    <span className="q-circle">
-                      <IconUsers size={21} />
-                    </span>
-                    Recipients
-                  </button>
-                  <button onClick={() => setFocus("charges")}>
-                    <span className="q-circle">
-                      <IconPercent size={21} />
-                    </span>
-                    Charges
-                  </button>
-                  <button onClick={() => setFocus("insights")}>
-                    <span className="q-circle">
-                      <IconBulb size={21} />
-                    </span>
-                    Insights
+                    Other
                   </button>
                 </div>
 
-                <div className="section" style={{ marginTop: 16 }}>
+                <RecentPreview
+                  transactions={transactions}
+                  onSeeAll={() => seeAllInActivity({})}
+                  onOpenTxn={setDetailTxn}
+                />
+
+                <div className="section summary-strip" style={{ marginTop: 16 }}>
                   <div className="segmented" role="group" aria-label="Period">
                     {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
                       <button key={r} aria-pressed={range === r} onClick={() => setRange(r)}>
@@ -280,12 +294,6 @@ export default function App() {
                     />
                   </div>
                 </div>
-
-                <RecentPreview
-                  transactions={transactions}
-                  onSeeAll={() => seeAllInActivity({})}
-                  onOpenTxn={setDetailTxn}
-                />
 
                 <section className="section flat-section">
                   <div className="section-head">
@@ -398,7 +406,7 @@ export default function App() {
           </button>
           <button className="primary" onClick={() => setImporting(true)} aria-label="Import">
             <span className="tico">
-              <IconPlus size={26} />
+              <IconScan size={25} />
             </span>
           </button>
           <button aria-current={!focus && tab === "trends"} onClick={() => openTab("trends")}>
@@ -730,11 +738,11 @@ function RecentPreview({
   onSeeAll: () => void;
   onOpenTxn: (t: Transaction) => void;
 }) {
-  const recent = transactions.slice(0, 4);
+  const recent = transactions.slice(0, 5);
   return (
     <section className="section">
       <div className="section-head">
-        <h2>Latest transactions</h2>
+        <h2>Recent Transaction</h2>
         <button className="link" onClick={onSeeAll}>
           See all
         </button>

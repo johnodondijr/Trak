@@ -14,11 +14,11 @@
   --ink: #16161a; /* near-black: cards, buttons, text */
 
   /* Backdrop + app surface */
-  --backdrop-1: #e9e7df;
-  --backdrop-2: #e3e1d8;
-  --screen: #f6f4ee;
+  --backdrop-1: #151513;
+  --backdrop-2: #050505;
+  --screen: #f3f1ea;
   --surface-1: #ffffff;
-  --surface-2: #f0eee7;
+  --surface-2: #e9e7df;
 
   /* Ink */
   --text-primary: #16161a;
@@ -40,6 +40,8 @@
   /* Money direction */
   --income: #16a34a;
   --expense: #e5484d;
+  --quick-green: #62b577;
+  --quick-warm: #eaa64b;
 
   /* Categorical series (validated, fixed order) */
   --series-1: #2a78d6;
@@ -57,10 +59,10 @@
   --status-serious: #ec835a;
   --status-critical: #e5484d;
 
-  --radius-xl: 26px;
-  --radius: 22px;
-  --radius-sm: 14px;
-  --shadow-card: 0 1px 2px rgba(20, 20, 26, 0.04), 0 10px 26px rgba(20, 20, 26, 0.05);
+  --radius-xl: 24px;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow-card: 0 1px 2px rgba(20, 20, 26, 0.04), 0 8px 20px rgba(20, 20, 26, 0.05);
   --shadow-float: 0 10px 34px rgba(20, 20, 26, 0.16);
   --font: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -143,7 +145,9 @@ body,
 }
 body {
   font-family: var(--font);
-  background: var(--backdrop-1);
+  background:
+    radial-gradient(circle at 50% 10%, #2b2a25 0, transparent 34%),
+    linear-gradient(180deg, var(--backdrop-1), var(--backdrop-2));
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   line-height: 1.45;
@@ -175,7 +179,25 @@ button {
   }
 }
 .screen {
+  position: relative;
   padding: 18px 16px 108px;
+}
+.screen > * {
+  position: relative;
+  z-index: 1;
+}
+.overview-screen {
+  padding-top: 14px;
+}
+.overview-screen::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 auto;
+  height: 268px;
+  background: #151513;
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.14);
 }
 
 /* Smooth tab switch: the keyed .tab-view remounts and fades up. */
@@ -213,7 +235,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 .hi {
   display: flex;
@@ -222,10 +244,10 @@ button {
   min-width: 0;
 }
 .hi-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--yellow);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #efe5d7;
   color: #16161a;
   display: grid;
   place-items: center;
@@ -243,13 +265,29 @@ button {
 }
 .hi small {
   display: block;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--text-secondary);
+  font-weight: 600;
 }
 .hi h1 {
-  font-size: 17px;
+  font-size: 15px;
   margin: 1px 0 0;
   letter-spacing: -0.01em;
+}
+.overview-screen .app-header {
+  color: #ffffff;
+}
+.overview-screen .hi small {
+  color: rgba(255, 255, 255, 0.62);
+}
+.overview-screen .hi-logo {
+  background: #efe5d7;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+.overview-screen .icon-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 .header-actions {
   display: flex;
@@ -257,9 +295,9 @@ button {
   flex: none;
 }
 .icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 13px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--surface-1);
   display: grid;
@@ -308,17 +346,18 @@ button {
 .hero {
   background: linear-gradient(150deg, var(--hero-1), var(--hero-2));
   color: var(--hero-ink);
-  border-radius: 28px;
-  padding: 24px 24px 22px;
-  box-shadow: 0 12px 30px rgba(245, 210, 17, 0.28);
+  border-radius: 15px;
+  padding: 17px 18px 15px;
+  box-shadow: none;
   position: relative;
   overflow: hidden;
+  margin: 0 3px;
 }
 .hero::after {
   content: "";
   position: absolute;
-  right: -60px;
-  top: -70px;
+  right: -80px;
+  top: -78px;
   width: 190px;
   height: 190px;
   border-radius: 50%;
@@ -330,15 +369,15 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 11px;
 }
 .hero-label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   opacity: 0.72;
 }
 .hero-brand {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.06em;
   font-style: italic;
@@ -363,27 +402,27 @@ button {
   opacity: 0.9;
 }
 .hero-amount {
-  font-size: 46px;
+  font-size: 34px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1.02;
   display: flex;
   align-items: center;
 }
 .hero-amount .cur {
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 700;
   opacity: 0.6;
   margin-right: 6px;
   align-self: flex-start;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 .hero-eye {
   border: none;
   background: rgba(28, 31, 16, 0.1);
   color: var(--hero-ink);
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: inline-grid;
   place-items: center;
@@ -415,7 +454,7 @@ button {
   margin-top: 24px;
 }
 .hero-dots {
-  font-size: 15px;
+  font-size: 12px;
   letter-spacing: 2px;
   opacity: 0.6;
   line-height: 1;
@@ -424,11 +463,11 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 700;
   background: rgba(28, 31, 16, 0.1);
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 3px 8px;
   white-space: nowrap;
 }
 /* card-carousel indicator dots below the card */
@@ -436,24 +475,24 @@ button {
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin: 12px 0 2px;
+  margin: 5px 0 7px;
 }
 .hero-dots-row span {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: var(--baseline);
 }
 .hero-dots-row span.active {
-  width: 18px;
-  border-radius: 3px;
-  background: var(--ink);
+  width: 4px;
+  border-radius: 50%;
+  background: #ffffff;
 }
 
 /* white "+ Import" CTA under the card (FastPay "+ Add Card") */
 .add-cta {
-  width: 100%;
-  margin-top: 4px;
+  width: calc(100% - 6px);
+  margin: 0 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -461,8 +500,8 @@ button {
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 14px;
-  font-size: 14px;
+  padding: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
   box-shadow: var(--shadow-card);
@@ -475,7 +514,7 @@ button {
 .quick {
   display: flex;
   gap: 8px;
-  margin: 16px 0 6px;
+  margin: 26px 2px 4px;
 }
 .quick button {
   flex: 1;
@@ -484,22 +523,21 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 .quick .q-circle {
-  width: 100%;
-  aspect-ratio: 1;
-  max-width: 62px;
-  border-radius: 20px;
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #e9e7df;
+  border: 1px solid rgba(20, 20, 26, 0.05);
   color: var(--text-primary);
   display: grid;
   place-items: center;
-  box-shadow: var(--shadow-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
   transition: transform 0.1s ease, background 0.12s ease;
 }
 .quick button:active .q-circle {
@@ -516,22 +554,22 @@ button {
 
 /* ---- Section + cards ---- */
 .section {
-  margin-top: 20px;
+  margin-top: 22px;
 }
 .section-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin: 0 4px 12px;
+  margin: 0 1px 10px;
 }
 .section-head h2 {
-  font-size: 15.5px;
+  font-size: 15px;
   margin: 0;
   letter-spacing: -0.01em;
 }
 .section-head .link {
-  font-size: 12.5px;
+  font-size: 11px;
   color: var(--accent);
   font-weight: 700;
   background: none;
@@ -546,7 +584,7 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 .flat-section {
   padding: 0 2px;
@@ -562,7 +600,7 @@ button {
 /* ---- Period segmented control ---- */
 .segmented {
   display: flex;
-  background: var(--surface-2);
+  background: #e9e7df;
   border-radius: 999px;
   padding: 4px;
   gap: 2px;
@@ -587,8 +625,8 @@ button {
 .mini-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 14px;
+  gap: 9px;
+  margin-top: 12px;
 }
 .mini {
   background: transparent;
@@ -606,12 +644,12 @@ button {
   margin-bottom: 9px;
 }
 .mini .lbl {
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--text-secondary);
   margin-bottom: 3px;
 }
 .mini .val {
-  font-size: 15.5px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -633,9 +671,15 @@ button {
   flex: none;
 }
 .pos {
-  color: var(--income);
+  color: var(--text-primary);
 }
 .neg {
+  color: var(--text-primary);
+}
+.mini .pos {
+  color: var(--income);
+}
+.mini .neg {
   color: var(--expense);
 }
 
@@ -702,10 +746,10 @@ button {
 }
 .tx {
   display: grid;
-  grid-template-columns: 44px 1fr auto;
-  gap: 12px;
+  grid-template-columns: 38px 1fr auto;
+  gap: 10px;
   align-items: center;
-  padding: 12px 4px;
+  padding: 9px 1px;
 }
 .avatar,
 .tx-arrow {
@@ -716,8 +760,8 @@ button {
   line-height: 1;
 }
 .tx-arrow {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
 }
 
 /* chevron on expandable summary rows */
@@ -735,14 +779,14 @@ button {
   min-width: 0;
 }
 .tx-title {
-  font-size: 14px;
+  font-size: 12.2px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .tx-meta {
-  font-size: 12px;
+  font-size: 10.5px;
   color: var(--muted);
   display: flex;
   gap: 6px;
@@ -752,12 +796,12 @@ button {
 .tx-amount {
   text-align: right;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 14.5px;
+  font-weight: 800;
+  font-size: 12.6px;
   white-space: nowrap;
 }
 .tx-cost {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
   font-weight: 500;
 }
@@ -1193,18 +1237,18 @@ button {
 /* ---- Bottom tab bar ---- */
 .tabbar {
   position: fixed;
-  bottom: 16px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(452px, calc(100vw - 28px));
+  width: min(438px, calc(100vw - 28px));
   background: #17171b;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 28px;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+  border-radius: 22px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 11px 14px;
+  padding: 9px 12px;
   z-index: 40;
 }
 .tabbar button {
@@ -1214,7 +1258,7 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.5);
   padding: 4px 4px;
@@ -1234,15 +1278,15 @@ button {
 .tabbar button.primary {
   background: var(--yellow);
   color: #16161a;
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   justify-content: center;
   gap: 0;
-  margin-top: -34px;
+  margin-top: -30px;
   box-shadow:
-    0 0 0 6px #17171b,
-    0 0 22px 2px rgba(245, 210, 17, 0.55),
+    0 0 0 7px #17171b,
+    0 0 24px 2px rgba(245, 210, 17, 0.64),
     0 8px 18px rgba(245, 210, 17, 0.4);
 }
 .tabbar button.primary .tico {

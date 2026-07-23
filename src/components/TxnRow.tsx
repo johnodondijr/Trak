@@ -19,7 +19,7 @@ export function TxnRow({
   const isExpense = txn.direction === "expense";
   const sign = isIncome ? "+" : isExpense ? "−" : "";
   const amountClass = isIncome ? "pos" : isExpense ? "neg" : "";
-  const color = isIncome ? "var(--income)" : isExpense ? "var(--expense)" : "var(--muted)";
+  const color = isIncome ? "var(--quick-warm)" : isExpense ? "var(--quick-green)" : "var(--muted)";
   const title =
     txn.counterparty ??
     (txn.type === "airtime"
