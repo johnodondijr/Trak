@@ -8,7 +8,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - claude/mobile-money-tracker-7a8i41
+      - main
   workflow_dispatch:
 
 # Permissions needed by the official Pages deploy actions.
