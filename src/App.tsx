@@ -138,9 +138,7 @@ export default function App() {
         ? "Statistics"
         : tab === "activity"
           ? "Transactions"
-          : displayName === "there"
-            ? "Trak"
-            : displayName;
+          : displayName || "Trak";
 
   function revealImported(merged: Transaction[]) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -203,7 +201,7 @@ export default function App() {
               <TrakMark size={26} />
             </div>
             <div>
-              <small>{greeting(now)}, {displayName}</small>
+              <small>{greeting(now)}{displayName ? `, ${displayName}` : " 👋"}</small>
               <h1>{headerTitle}</h1>
             </div>
           </div>
@@ -879,7 +877,7 @@ function loggedInName(): string {
     const value = localStorage.getItem(key)?.trim();
     if (value) return value.split(/\s+/)[0];
   }
-  return "there";
+  return "";
 }
 
 function formatReadAsOf(date: Date): string {

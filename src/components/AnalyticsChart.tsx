@@ -25,6 +25,8 @@ export function AnalyticsChart({ data }: { data: AnalyticsPoint[] }) {
   const plotH = H - pad.t - pad.b;
   const n = data.length;
 
+  const maxLabels = 7;
+  const labelStep = Math.max(1, Math.ceil(n / maxLabels));
   const max = Math.max(1, ...data.map((d) => d.value));
   const niceMax = niceCeil(max);
   const x = (i: number) => (n === 1 ? pad.l + plotW / 2 : pad.l + (i / (n - 1)) * plotW);
@@ -75,11 +77,16 @@ export function AnalyticsChart({ data }: { data: AnalyticsPoint[] }) {
           </>
         )}
 
-        {data.map((d, i) => (
-          <text key={d.label} x={x(i)} y={H - 9} textAnchor="middle" fontSize={11} fill="rgba(255,255,255,0.45)">
-            {d.label}
-          </text>
-        ))}
+        {data.map((d, i) => {
+          // Thin the axis labels so a long series (e.g. 31 daily points) doesn't
+          // smear into an unreadable strip — show ~7 evenly spaced, always the last.
+          if (i % labelStep !== 0 && i !== n - 1) return null;
+          return (
+            <text key={d.label} x={x(i)} y={H - 9} textAnchor="middle" fontSize={11} fill="rgba(255,255,255,0.45)">
+              {d.label}
+            </text>
+          );
+        })}
 
         {data.map((_, i) => (
           <rect
