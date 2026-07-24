@@ -5,7 +5,6 @@ import {
   byCategory,
   insights,
   latestBalance,
-  monthlyTrend,
   monthOverMonth,
   summarize,
   topCounterparties,
@@ -104,7 +103,6 @@ export default function App() {
     [range, summary, inRange],
   );
   const categories = useMemo(() => byCategory(inRange), [inRange]);
-  const trend = useMemo(() => monthlyTrend(transactions), [transactions]);
   const mom = useMemo(() => monthOverMonth(transactions, now), [transactions, now]);
   const tips = useMemo(() => insights(transactions, now), [transactions, now]);
   const balance = useMemo(() => latestBalance(transactions), [transactions]);
@@ -169,7 +167,7 @@ export default function App() {
               <TrakMark size={26} />
             </div>
             <div>
-              <small>{greeting(now)}, {displayName}</small>
+              <small>{greeting(now)}{displayName ? `, ${displayName}` : " 👋"}</small>
               <h1>{headerTitle}</h1>
             </div>
           </div>
@@ -325,7 +323,6 @@ export default function App() {
                 </div>
                 <StatsScreen
                   transactions={transactions}
-                  trend={trend}
                   mom={mom}
                   onOpenTxn={setDetailTxn}
                 />
@@ -752,7 +749,7 @@ function loggedInName(): string {
     const value = localStorage.getItem(key)?.trim();
     if (value) return value.split(/\s+/)[0];
   }
-  return "there";
+  return "";
 }
 
 function filterByRange(txns: Transaction[], range: Range, now: Date): Transaction[] {

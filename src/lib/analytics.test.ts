@@ -6,8 +6,10 @@ import {
   byCategory,
   topCounterparties,
   monthlyTrend,
+  spendingTrend,
   insights,
 } from "./analytics";
+import type { Transaction } from "./parser/types";
 import { SAMPLE_MESSAGES } from "../data/sampleMessages";
 
 const { transactions } = parseMessages(SAMPLE_MESSAGES);
@@ -71,6 +73,55 @@ describe("monthlyTrend", () => {
     for (let i = 1; i < trend.length; i++) {
       expect(trend[i].month.getTime()).toBeGreaterThan(trend[i - 1].month.getTime());
     }
+  });
+});
+
+describe("spendingTrend", () => {
+  const mkTxn = (date: Date, expense: number): Transaction => ({
+    ref: `r${date.getTime()}-${expense}`,
+    provider: "mpesa",
+    type: "send",
+    direction: "expense",
+    amount: expense,
+    cost: 0,
+    balance: null,
+    counterparty: null,
+    account: null,
+    date,
+    category: "other",
+    raw: "",
+  });
+
+  it("buckets by week (not month) when data spans only a couple of months", () => {
+    // ~7 weeks of data across June–July: monthly would give 2 flat points.
+    const txns = [
+      mkTxn(new Date(2026, 5, 1), 100),
+      mkTxn(new Date(2026, 5, 15), 200),
+      mkTxn(new Date(2026, 5, 29), 300),
+      mkTxn(new Date(2026, 6, 6), 400),
+      mkTxn(new Date(2026, 6, 20), 500),
+    ];
+    const trend = spendingTrend(txns);
+    // Far more points than the 2 a monthly bucket would yield → a real curve.
+    expect(trend.length).toBeGreaterThan(monthlyTrend(txns).length);
+    expect(trend.length).toBeGreaterThanOrEqual(6);
+    // No spend is lost across buckets.
+    const summed = trend.reduce((a, p) => a + p.expense, 0);
+    expect(summed).toBe(1500);
+  });
+
+  it("buckets by day for a short span and by month for a long one", () => {
+    const short = [mkTxn(new Date(2026, 6, 1), 50), mkTxn(new Date(2026, 6, 8), 70)];
+    // 7-day span → daily buckets fill every day between → 8 points.
+    expect(spendingTrend(short).length).toBe(8);
+
+    const long = [mkTxn(new Date(2026, 0, 1), 50), mkTxn(new Date(2026, 6, 1), 70)];
+    // 6-month span → monthly buckets → 7 points (Jan..Jul inclusive).
+    expect(spendingTrend(long).length).toBe(7);
+  });
+
+  it("returns nothing for no transactions", () => {
+    expect(spendingTrend([])).toEqual([]);
   });
 });
 

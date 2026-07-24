@@ -54,6 +54,8 @@ export interface MoMStat {
   current: number;
   /** Total for the previous calendar month. */
   previous: number;
+  /** Number of transactions in the previous month (to judge if the % is meaningful). */
+  previousCount: number;
   /** Percentage change vs last month (0 when last month was 0). */
   pct: number;
 }
@@ -77,6 +79,7 @@ export function monthOverMonth(
   const stat = (current: number, previous: number): MoMStat => ({
     current,
     previous,
+    previousCount: prev.count,
     pct: previous > 0 ? ((current - previous) / previous) * 100 : 0,
   });
 
@@ -246,6 +249,71 @@ export function monthlyTrend(txns: Transaction[]): MonthlyPoint[] {
       net: entry.income - entry.expense,
     });
     cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return points;
+}
+
+export interface TrendPoint {
+  /** Short axis label, e.g. "Jun 8" (day/week) or "Jul" (month). */
+  label: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
+/**
+ * An income/expense trend for the Stats chart that adapts its bucket size to
+ * the data's span, so the curve always has enough points to read as a curve
+ * instead of a single straight line: daily for a few weeks of data, weekly up
+ * to a few months, monthly beyond that. Empty buckets between the first and
+ * last transaction are filled so the line never skips a gap.
+ */
+export function spendingTrend(txns: Transaction[]): TrendPoint[] {
+  if (txns.length === 0) return [];
+  const sorted = [...txns].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const firstDate = sorted[0].date;
+  const lastDate = sorted[sorted.length - 1].date;
+  const spanDays = Math.round(
+    (startOfDay(lastDate).getTime() - startOfDay(firstDate).getTime()) / 86_400_000,
+  );
+  const gran: "day" | "week" | "month" =
+    spanDays <= 24 ? "day" : spanDays <= 120 ? "week" : "month";
+
+  const bucketStart = (d: Date) =>
+    gran === "day" ? startOfDay(d) : gran === "week" ? startOfWeek(d) : startOfMonth(d);
+  const advance = (d: Date): Date => {
+    const x = new Date(d);
+    if (gran === "day") x.setDate(x.getDate() + 1);
+    else if (gran === "week") x.setDate(x.getDate() + 7);
+    else x.setMonth(x.getMonth() + 1);
+    return x;
+  };
+  const dayFmt = new Intl.DateTimeFormat("en-KE", { day: "numeric", month: "short" });
+  const monthFmt = new Intl.DateTimeFormat("en-KE", { month: "short" });
+  const label = (d: Date) => (gran === "month" ? monthFmt.format(d) : dayFmt.format(d));
+
+  const buckets = new Map<number, { income: number; expense: number }>();
+  for (const t of sorted) {
+    const k = bucketStart(t.date).getTime();
+    const entry = buckets.get(k) ?? { income: 0, expense: 0 };
+    if (t.direction === "income") entry.income += t.amount;
+    else if (t.direction === "expense") entry.expense += t.amount + t.cost;
+    buckets.set(k, entry);
+  }
+
+  const points: TrendPoint[] = [];
+  const end = bucketStart(lastDate).getTime();
+  let cursor = bucketStart(firstDate);
+  // Guard against a pathological span producing an unbounded number of buckets.
+  for (let guard = 0; cursor.getTime() <= end && guard < 400; guard++) {
+    const entry = buckets.get(cursor.getTime()) ?? { income: 0, expense: 0 };
+    points.push({
+      label: label(cursor),
+      income: entry.income,
+      expense: entry.expense,
+      net: entry.income - entry.expense,
+    });
+    cursor = advance(cursor);
   }
   return points;
 }

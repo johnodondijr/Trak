@@ -175,7 +175,9 @@ button {
   }
 }
 .screen {
-  padding: 18px 16px 108px;
+  /* Bottom room clears the floating tabbar AND its center FAB, which pops up
+     ~34px above the bar, plus the device safe-area inset. */
+  padding: 18px 16px calc(140px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Smooth tab switch: the keyed .tab-view remounts and fades up. */

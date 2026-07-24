@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Transaction } from "../lib/parser/types";
-import type { MonthlyPoint, MoMStat } from "../lib/analytics";
+import { spendingTrend, type MoMStat } from "../lib/analytics";
 import { kes } from "../lib/format";
 import { IconArrowUp, IconArrowDown } from "./icons";
 import { AnalyticsChart, type AnalyticsPoint } from "./AnalyticsChart";
@@ -15,12 +15,10 @@ type Mode = "income" | "expenses";
  */
 export function StatsScreen({
   transactions,
-  trend,
   mom,
   onOpenTxn,
 }: {
   transactions: Transaction[];
-  trend: MonthlyPoint[];
   mom: { income: MoMStat; expense: MoMStat };
   onOpenTxn: (t: Transaction) => void;
 }) {
@@ -28,13 +26,14 @@ export function StatsScreen({
   const isIncome = mode === "income";
   const stat = isIncome ? mom.income : mom.expense;
 
+  const series = useMemo(() => spendingTrend(transactions), [transactions]);
   const points: AnalyticsPoint[] = useMemo(
     () =>
-      trend.map((p) => ({
-        label: p.label.replace(/ \d{4}$/, ""),
+      series.map((p) => ({
+        label: p.label,
         value: isIncome ? p.income : p.expense,
       })),
-    [trend, isIncome],
+    [series, isIncome],
   );
 
   const recent = useMemo(
@@ -49,6 +48,9 @@ export function StatsScreen({
   const pctText = `${up ? "+" : "−"}${Math.abs(Math.round(stat.pct))}%`;
   // For spending, an increase is "bad" (red); for income, up is "good" (green).
   const deltaGood = isIncome ? up : !up;
+  // Only surface a "vs last month" figure when last month had enough activity
+  // that the percentage isn't just noise off a near-empty base.
+  const showDelta = stat.previous > 0 && stat.previousCount >= 3;
 
   return (
     <div className="stats">
@@ -56,7 +58,7 @@ export function StatsScreen({
         <div className="stats-label">Total {isIncome ? "income" : "spending"}</div>
         <div className="stats-total-row">
           <div className="stats-total">{kes(stat.current)}</div>
-          {stat.previous > 0 && (
+          {showDelta && (
             <span className={`stats-delta ${deltaGood ? "pos" : "neg"}`}>
               {up ? <IconArrowUp size={13} /> : <IconArrowDown size={13} />}
               {pctText} <span className="stats-delta-sub">vs last month</span>
@@ -78,7 +80,7 @@ export function StatsScreen({
         <div className="analytics-card-head">
           <div>
             <div className="analytics-card-title">Transaction Analytics</div>
-            <div className="analytics-card-sub">Monthly {isIncome ? "income" : "spending"}</div>
+            <div className="analytics-card-sub">{isIncome ? "Income" : "Spending"} over time</div>
           </div>
           <div className="analytics-card-total">{kes(stat.current)}</div>
         </div>
