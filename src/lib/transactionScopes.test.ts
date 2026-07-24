@@ -56,4 +56,36 @@ describe("transaction scopes", () => {
     ]);
     expect(transactionsForLine([lineOne, lineSeven, bankToMpesa], "sub:7")).toEqual([lineSeven]);
   });
+
+  it("caps detected lines to the declared count, folding strays into the busiest line", () => {
+    // Two real lines plus a small stray group (e.g. a re-seated SIM's new sub-id).
+    const primary = Array.from({ length: 12 }, (_, i) => txn({ ref: `p${i}`, lineId: "sub:1" }));
+    const second = Array.from({ length: 9 }, (_, i) => txn({ ref: `s${i}`, lineId: "sub:2" }));
+    const stray = Array.from({ length: 2 }, (_, i) => txn({ ref: `x${i}`, lineId: "sub:5" }));
+    const all = [...primary, ...second, ...stray];
+
+    // Declaring two lines shows exactly two — the stray folds into the busiest.
+    const lines = walletLineOptions(all, 2);
+    expect(lines).toEqual([
+      { id: "sub:1", label: "Line 1", count: 14 }, // 12 + 2 stray
+      { id: "sub:2", label: "Line 2", count: 9 },
+    ]);
+    // The folded stray is reachable via its canonical (busiest) line.
+    expect(transactionsForLine(all, "sub:1", 2)).toHaveLength(14);
+    expect(transactionsForLine(all, "sub:2", 2)).toHaveLength(9);
+  });
+
+  it("shows no switcher when the user declares a single line", () => {
+    const a = txn({ ref: "a", lineId: "sub:1" });
+    const b = txn({ ref: "b", lineId: "sub:2" });
+    expect(walletLineOptions([a, b], 1)).toEqual([]);
+    // A single declared line still returns every wallet transaction under "all".
+    expect(transactionsForLine([a, b], "all", 1)).toHaveLength(2);
+  });
+
+  it("drops an obvious phantom line in auto mode", () => {
+    const primary = Array.from({ length: 30 }, (_, i) => txn({ ref: `p${i}`, lineId: "sub:1" }));
+    const phantom = [txn({ ref: "ph", lineId: "sub:9" })]; // 1 of 31 → below 10%
+    expect(walletLineOptions([...primary, ...phantom])).toEqual([]);
+  });
 });

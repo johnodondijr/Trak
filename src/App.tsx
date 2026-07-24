@@ -11,8 +11,10 @@ import {
 } from "./lib/analytics";
 import {
   clearTransactions,
+  loadLineCount,
   loadTransactions,
   mergeTransactions,
+  saveLineCount,
   saveTransactions,
 } from "./lib/storage";
 import { SAMPLE_MESSAGES } from "./data/sampleMessages";
@@ -21,6 +23,7 @@ import {
   bankOnlyTransactions,
   transactionsForLine,
   walletLineOptions,
+  type LineCount,
 } from "./lib/transactionScopes";
 import { kes, greeting, typeLabel, formatDate } from "./lib/format";
 import { CategoryBreakdown } from "./components/CategoryBreakdown";
@@ -94,6 +97,7 @@ export default function App() {
   );
   const [hideBalance, setHideBalance] = useState(false);
   const [selectedLine, setSelectedLine] = useState<string>("all");
+  const [lineCount, setLineCount] = useState<LineCount>(() => loadLineCount());
   const [lastReadAt, setLastReadAt] = useState<Date | null>(() => {
     const raw = localStorage.getItem(LAST_READ_AT_KEY);
     if (!raw) return null;
@@ -102,20 +106,22 @@ export default function App() {
   });
 
   useEffect(() => saveTransactions(transactions), [transactions]);
+  useEffect(() => saveLineCount(lineCount), [lineCount]);
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("trak.theme", theme);
   }, [theme]);
 
   const now = useMemo(() => new Date(), []);
-  const lineOptions = useMemo(() => walletLineOptions(transactions), [transactions]);
-  const hasMultipleLines = lineOptions.length > 1;
-  const activeLine = hasMultipleLines
-    ? lineOptions.some((l) => l.id === selectedLine)
-      ? selectedLine
-      : lineOptions[0]?.id ?? "all"
-    : "all";
-  const walletTxns = useMemo(() => transactionsForLine(transactions, activeLine), [transactions, activeLine]);
+  const lineOptions = useMemo(() => walletLineOptions(transactions, lineCount), [transactions, lineCount]);
+  // "all" = both lines combined; otherwise a specific line. Fall back to "all"
+  // when the chosen line no longer exists (e.g. after changing the line count).
+  const activeLine =
+    selectedLine === "all" || lineOptions.some((l) => l.id === selectedLine) ? selectedLine : "all";
+  const walletTxns = useMemo(
+    () => transactionsForLine(transactions, activeLine, lineCount),
+    [transactions, activeLine, lineCount],
+  );
   const bankTxns = useMemo(() => bankOnlyTransactions(transactions), [transactions]);
   const summary = useMemo(() => summarize(walletTxns, now), [walletTxns, now]);
   const inRange = useMemo(() => filterByRange(walletTxns, range, now), [walletTxns, range, now]);
@@ -409,6 +415,9 @@ export default function App() {
                 count={transactions.length}
                 bankCount={bankTxns.length}
                 theme={theme}
+                lineCount={lineCount}
+                detectedLines={walletLineOptions(transactions, lineCount).length}
+                onSetLineCount={setLineCount}
                 onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
                 onImport={() => setImporting(true)}
                 onSample={loadSample}
@@ -469,13 +478,66 @@ function LineSelector({
   selected: string;
   onSelect: (id: string) => void;
 }) {
+  const total = lines.reduce((sum, l) => sum + l.count, 0);
   return (
     <div className="line-selector" role="group" aria-label="M-PESA line">
+      <button aria-pressed={selected === "all"} onClick={() => onSelect("all")}>
+        All lines <span>{total}</span>
+      </button>
       {lines.map((line) => (
         <button key={line.id} aria-pressed={selected === line.id} onClick={() => onSelect(line.id)}>
           {line.label} <span>{line.count}</span>
         </button>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Account setting for how many M-PESA lines the user owns. Declaring the count
+ * overrides Trak's guess, so a two-line user never sees a phantom third line and
+ * a single-line user never sees a switcher at all.
+ */
+function LineSetting({
+  value,
+  detected,
+  onChange,
+}: {
+  value: LineCount;
+  detected: number;
+  onChange: (value: LineCount) => void;
+}) {
+  const help =
+    value === "auto"
+      ? detected > 1
+        ? `Auto-detected ${detected} lines from your messages.`
+        : "Auto-detecting from your messages."
+      : value === 1
+        ? "Everything is shown as a single line."
+        : `Your messages are split across ${value} lines.`;
+  const options: { label: string; val: LineCount }[] = [
+    { label: "Auto", val: "auto" },
+    { label: "1 line", val: 1 },
+    { label: "2 lines", val: 2 },
+  ];
+  return (
+    <div className="more-group">
+      <div className="more-row static">
+        <span className="more-ico">
+          <IconTransfer size={19} />
+        </span>
+        <span className="more-label">
+          Your M-PESA lines
+          <small>{help}</small>
+        </span>
+      </div>
+      <div className="line-count-toggle" role="group" aria-label="Number of M-PESA lines">
+        {options.map((o) => (
+          <button key={String(o.val)} aria-pressed={value === o.val} onClick={() => onChange(o.val)}>
+            {o.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -732,6 +794,9 @@ function MoreScreen({
   count,
   bankCount,
   theme,
+  lineCount,
+  detectedLines,
+  onSetLineCount,
   onToggleTheme,
   onImport,
   onSample,
@@ -741,6 +806,9 @@ function MoreScreen({
   count: number;
   bankCount: number;
   theme: Theme;
+  lineCount: LineCount;
+  detectedLines: number;
+  onSetLineCount: (value: LineCount) => void;
   onToggleTheme: () => void;
   onImport: () => void;
   onSample: () => void;
@@ -758,6 +826,8 @@ function MoreScreen({
           <div className="more-sub">{count} transactions · stored on this device</div>
         </div>
       </div>
+
+      <LineSetting value={lineCount} detected={detectedLines} onChange={onSetLineCount} />
 
       <div className="more-group">
         <button className="more-row" onClick={onToggleTheme}>

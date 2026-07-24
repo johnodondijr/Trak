@@ -6,10 +6,36 @@
  * imports, while preserving the stored SMS receipt date.
  */
 import type { Transaction } from "./parser/types";
+import type { LineCount } from "./transactionScopes";
 import { parseMessage } from "./parser";
 import { dedupeTransactions, mergeTransactionSets } from "./transactionDedupe";
 
 const STORAGE_KEY = "trak.transactions.v1";
+const LINE_COUNT_KEY = "trak.lineCount";
+
+/**
+ * The number of M-PESA lines the user has told us they own. `"auto"` (the
+ * default) lets Trak infer it from the messages. Persisted so the setting — and
+ * with it the phantom-line fix and the home line switcher — survives reloads.
+ */
+export function loadLineCount(): LineCount {
+  try {
+    const raw = localStorage.getItem(LINE_COUNT_KEY);
+    if (!raw || raw === "auto") return "auto";
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 1 ? n : "auto";
+  } catch {
+    return "auto";
+  }
+}
+
+export function saveLineCount(value: LineCount): void {
+  try {
+    localStorage.setItem(LINE_COUNT_KEY, value === "auto" ? "auto" : String(value));
+  } catch {
+    // ignore — the in-memory setting still applies for this session.
+  }
+}
 
 interface StoredTransaction extends Omit<Transaction, "date"> {
   date: string;
