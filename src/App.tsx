@@ -137,6 +137,9 @@ export default function App() {
   /** Switch to a nav tab, leaving any focus sub-page. */
   function openTab(t: Tab) {
     setFocus(null);
+    // Clear any filter left over from a "See all" drill-down so a plain tap on
+    // Transactions in the bottom nav always shows the full, unfiltered list.
+    if (t === "activity") setActivityPreset({});
     setTab(t);
   }
   /** Jump to the Activity tab pre-filtered from a summary drill-down. */
